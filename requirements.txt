@@ -1,0 +1,13 @@
+# API
+fastapi>=0.110
+uvicorn[standard]>=0.27
+python-multipart>=0.0.9
+pydantic>=2.6
+
+# Authentication
+PyJWT>=2.8
+
+# Utilities
+requests>=2.31
+pyyaml>=6.0
+python-dotenv>=1.0
