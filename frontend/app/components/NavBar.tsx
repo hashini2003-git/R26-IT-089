@@ -190,7 +190,7 @@ export default function NavBar() {
 
   // Navigation links configuration
   const navLinks = [
-    { href: "/component1", label: "Component 1" },
+    { href: "/Component1", label: "Component 1" },
     { href: "/component2", label: "Component 2" },
     { href: "/component3", label: "Component 3" },
     { href: "/component4", label: "Component 4" },

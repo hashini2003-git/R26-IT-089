@@ -13,6 +13,11 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from src.api.model import load_model
+
+from src.api.predict import router as predict_router
+from src.api.assistant import router as assistant_router
+from src.api.report    import router as report_router
 
 from src.api.auth import create_token
 from src.api.db import (
@@ -42,7 +47,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(predict_router)
+app.include_router(assistant_router)
+app.include_router(report_router)
+
 init_db()
+
+# Load IPE model at startup
+try:
+    load_model()
+    logger.info("IPE model ready!")
+except Exception as e:
+    logger.warning(f"Model load failed: {e}")
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
 
