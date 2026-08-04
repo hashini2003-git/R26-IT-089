@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { C, FONT, Glass, Screen, TabBar, loadResult, type IpeResult } from "../_lib/ipe-ui";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-// ── Visit type stored in localStorage ──────────────────────────
 type Visit = {
   id: string;
   date: string;
@@ -44,7 +44,6 @@ function resultToVisit(r: IpeResult): Visit {
   };
 }
 
-// ── Mini line chart ─────────────────────────────────────────────
 function LineChart({ values, color, height=60, width=300 }: { values:number[]; color:string; height?:number; width?:number }) {
   if (values.length < 2) return null;
   const mn=Math.min(...values); const mx=Math.max(...values); const range=mx-mn||1;
@@ -72,7 +71,6 @@ function LineChart({ values, color, height=60, width=300 }: { values:number[]; c
   );
 }
 
-// ── Trend badge ─────────────────────────────────────────────────
 function Trend({ current, previous, lower=true }: { current:number; previous:number; lower?:boolean }) {
   const diff = current - previous;
   const good = lower ? diff < 0 : diff > 0;
@@ -90,6 +88,7 @@ export default function ProgressPage() {
   const [visits, setVisits] = useState<Visit[]>([]);
   const [current, setCurrent] = useState<IpeResult|null>(null);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const r = loadResult();
@@ -97,13 +96,43 @@ export default function ProgressPage() {
     setVisits(loadVisits());
   }, []);
 
-  const handleSaveVisit = () => {
+  const saveCurrentVisit = async () => {
     if (!current) return;
-    const v = resultToVisit(current);
-    const updated = [...visits, v];
-    setVisits(updated);
-    saveVisits(updated);
-    setSaved(true);
+    setSaving(true);
+    const patientId = localStorage.getItem("patient_id") ?? "guest";
+    try {
+      const res = await fetch(`${API}/progress/save`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patient_id: patientId,
+          class_name: current.classification.name,
+          ppi: current.ppi.score,
+          fis_speech: current.fis.speech,
+          fis_swallow: current.fis.swallowing,
+          fis_mouth: current.fis.mouth,
+          erythema: current.visual_features.erythema,
+          ulceration: current.visual_features.ulceration,
+          texture: current.visual_features.texture,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error("Save failed");
+      const v = resultToVisit(current);
+      v.id = data.id?.toString() ?? v.id;
+      const updated = [...visits, v];
+      setVisits(updated);
+      saveVisits(updated);
+      setSaved(true);
+    } catch (e) {
+      const v = resultToVisit(current);
+      const updated = [...visits, v];
+      setVisits(updated);
+      saveVisits(updated);
+      setSaved(true);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleClearHistory = () => {
@@ -121,7 +150,6 @@ export default function ProgressPage() {
   const ppiLabel = (p:number) => p<=1?"No Pain":p<=3?"Mild":p<=5?"Moderate":p<=7.5?"Severe":"Critical";
   const clsColor = (n:string) => ({"Normal":C.sev[0],"Variation from Normal":C.sev[1],"OPMD":C.sev[2],"Oral Cancer":C.sev[3]} as any)[n]??C.teal;
 
-  // TRI — treatment response index
   let tri: string|null = null;
   let recDate: string|null = null;
   if (visits.length >= 2) {
@@ -155,15 +183,14 @@ export default function ProgressPage() {
           )}
         </div>
 
-        {/* Save current visit */}
         {current && !saved && (
           <div style={{ background:`${C.teal}08`, border:`1.5px solid ${C.teal}30`, borderRadius:20, padding:18, marginBottom:16 }}>
             <div style={{ fontSize:13, fontWeight:700, color:C.teal, marginBottom:6 }}>Save current analysis as a visit?</div>
             <div style={{ fontSize:12, color:C.ink3, marginBottom:12 }}>
               {current.classification.name} · PPI {current.ppi.score.toFixed(1)}/10 · {new Date().toLocaleDateString()}
             </div>
-            <button onClick={handleSaveVisit} style={{ background:`linear-gradient(135deg,${C.teal},${C.tealDark})`, border:"none", borderRadius:14, padding:"12px 20px", fontSize:13, fontWeight:700, color:"#fff", cursor:"pointer", width:"100%" }}>
-              + Add to Progress History
+            <button onClick={saveCurrentVisit} disabled={saving} style={{ background:`linear-gradient(135deg,${C.teal},${C.tealDark})`, border:"none", borderRadius:14, padding:"12px 20px", fontSize:13, fontWeight:700, color:"#fff", cursor: saving ? "default" : "pointer", width:"100%", opacity: saving ? 0.7 : 1 }}>
+              {saving ? "Saving..." : "+ Add to Progress History"}
             </button>
           </div>
         )}
@@ -176,7 +203,6 @@ export default function ProgressPage() {
 
         {hasHistory ? (
           <>
-            {/* PPI chart */}
             <div style={{ background:C.bgWhite, borderRadius:20, padding:20, marginBottom:14, boxShadow:"0 2px 16px rgba(13,33,55,0.07)" }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
                 <div>
@@ -200,7 +226,6 @@ export default function ProgressPage() {
               </div>
             </div>
 
-            {/* FIS chart */}
             <div style={{ background:C.bgWhite, borderRadius:20, padding:20, marginBottom:14, boxShadow:"0 2px 16px rgba(13,33,55,0.07)" }}>
               <div style={{ fontSize:15, fontWeight:800, color:C.ink, marginBottom:4 }}>Functional Impact (FIS)</div>
               <div style={{ fontSize:11, color:C.ink3, marginBottom:16 }}>Speech impairment over time</div>
@@ -215,7 +240,6 @@ export default function ProgressPage() {
               )}
             </div>
 
-            {/* Erythema chart */}
             <div style={{ background:C.bgWhite, borderRadius:20, padding:20, marginBottom:14, boxShadow:"0 2px 16px rgba(13,33,55,0.07)" }}>
               <div style={{ fontSize:15, fontWeight:800, color:C.ink, marginBottom:4 }}>Erythema (Redness)</div>
               <div style={{ fontSize:11, color:C.ink3, marginBottom:16 }}>Inflammation reduction tracking</div>
@@ -224,7 +248,6 @@ export default function ProgressPage() {
               </div>
             </div>
 
-            {/* TRI + Recovery Prediction */}
             {tri && (
               <div style={{ background:C.bgWhite, borderRadius:20, padding:20, marginBottom:14, boxShadow:"0 2px 16px rgba(13,33,55,0.07)" }}>
                 <div style={{ fontSize:11, fontWeight:700, color:C.teal, textTransform:"uppercase", letterSpacing:1, marginBottom:12 }}>Treatment Response</div>
@@ -237,7 +260,6 @@ export default function ProgressPage() {
               </div>
             )}
 
-            {/* Visit cards */}
             <div style={{ fontSize:15, fontWeight:800, color:C.ink, marginBottom:12 }}>Visit History</div>
             <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:24 }}>
               {[...visits].reverse().map((v,i)=>{
@@ -273,7 +295,6 @@ export default function ProgressPage() {
             </div>
           </>
         ) : (
-          /* Empty state */
           <div style={{ background:C.bgWhite, borderRadius:20, padding:"40px 24px", textAlign:"center", marginBottom:24, boxShadow:"0 2px 16px rgba(13,33,55,0.07)" }}>
             <div style={{ fontSize:17, fontWeight:800, color:C.ink, marginBottom:8 }}>Your Journey Starts Here</div>
             <div style={{ fontSize:13, color:C.ink3, lineHeight:1.6, marginBottom:20 }}>

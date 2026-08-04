@@ -145,7 +145,9 @@ export default function ResultsOverview() {
           onClick={() => router.push("/Component1/results/treatment")} />
         <NavCard icon="document" title="Clinical Report" subtitle="Download PDF with QR code" accent={C.teal}
           onClick={() => router.push("/Component1/results/report")} />
-      </div>
+        <NavCard icon="trend" title="Before & After" subtitle="Compare two visits side by side" accent={C.lavender}
+          onClick={() => router.push("/Component1/compare")} />
+        </div>
 
       {/* Assistant message */}
       <Glass style={{ marginBottom: 90, borderLeft: `4px solid ${C.teal}` }}>

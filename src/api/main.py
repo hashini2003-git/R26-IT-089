@@ -18,6 +18,7 @@ from src.api.model import load_model
 from src.api.predict import router as predict_router
 from src.api.assistant import router as assistant_router
 from src.api.report    import router as report_router
+from src.api.progress_routes import router as progress_router, init_visits_table
 
 from src.api.auth import create_token
 from src.api.db import (
@@ -50,8 +51,11 @@ app.add_middleware(
 app.include_router(predict_router)
 app.include_router(assistant_router)
 app.include_router(report_router)
+app.include_router(progress_router)
 
 init_db()
+
+init_visits_table()
 
 # Load IPE model at startup
 try:
