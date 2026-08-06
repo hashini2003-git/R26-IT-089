@@ -99,21 +99,27 @@ export default function ProgressPage() {
   const saveCurrentVisit = async () => {
     if (!current) return;
     setSaving(true);
-    const patientId = localStorage.getItem("patient_id") ?? "guest";
     try {
+      const token = localStorage.getItem("ipe_token");
       const res = await fetch(`${API}/progress/save`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
-          patient_id: patientId,
-          class_name: current.classification.name,
-          ppi: current.ppi.score,
-          fis_speech: current.fis.speech,
+          class_name:  current.classification.name,
+          confidence:  current.classification.confidence,
+          ppi:         current.ppi.score,
+          ppi_label:   current.ppi.label,
+          fis_speech:  current.fis.speech,
           fis_swallow: current.fis.swallowing,
-          fis_mouth: current.fis.mouth,
-          erythema: current.visual_features.erythema,
-          ulceration: current.visual_features.ulceration,
-          texture: current.visual_features.texture,
+          fis_mouth:   current.fis.mouth,
+          erythema:    current.visual_features.erythema,
+          ulceration:  current.visual_features.ulceration,
+          texture:     current.visual_features.texture,
+          physio:      current.visual_features.physio,
+          urgency:     current.urgency.timeframe,
         }),
       });
       const data = await res.json();
@@ -125,6 +131,7 @@ export default function ProgressPage() {
       saveVisits(updated);
       setSaved(true);
     } catch (e) {
+      // Backend save failed (offline, not logged in, etc.) — still keep it locally
       const v = resultToVisit(current);
       const updated = [...visits, v];
       setVisits(updated);
