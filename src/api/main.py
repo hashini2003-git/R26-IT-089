@@ -53,6 +53,7 @@ app.include_router(assistant_router)
 app.include_router(report_router)
 app.include_router(progress_router)
 
+# Initialize MongoDB connection
 init_db()
 
 init_visits_table()
