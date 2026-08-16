@@ -193,7 +193,7 @@ export default function NavBar() {
     { href: "/Component1", label: "Component 1" },
     { href: "/component2", label: "Component 2" },
     { href: "/component3", label: "Component 3" },
-    { href: "/component4", label: "Component 4" },
+    { href: "/vocal_therapy/guide", label: "Vocal Therapy" },
   ];
 
   return (

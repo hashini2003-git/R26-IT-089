@@ -97,3 +97,6 @@ coverage/
 reports/
 
 # Keep this repository clean of OS/editor specific files
+
+src/api/models/ipe_best_model_v2.pth
+src/api/models/ipe_oca_e13.pth
