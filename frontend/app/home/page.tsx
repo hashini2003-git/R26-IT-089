@@ -10,11 +10,11 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isLoggedIn()) {
-      router.push('/login');
-    } else {
-      setLoading(false);
-    }
+    const timer = window.setTimeout(() => {
+      if (!isLoggedIn()) router.push('/login');
+      else setLoading(false);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [router]);
 
   if (loading) {

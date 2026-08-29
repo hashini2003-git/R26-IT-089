@@ -15,6 +15,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from src.api.auth import create_token
+from src.risk_voice.main import app as risk_voice_app
+from src.risk_voice.services.database_service import close_database as close_risk_voice_database
+from src.risk_voice.services.database_service import connect_database as connect_risk_voice_database
 from src.api.db import (
     create_patient,
     get_patient_by_mobile,
@@ -43,6 +46,19 @@ app.add_middleware(
 )
 
 init_db()
+
+
+@app.on_event("startup")
+async def start_risk_voice_database() -> None:
+    try:
+        await connect_risk_voice_database()
+    except Exception as exc:
+        logger.warning("Risk/voice MongoDB connection unavailable; using memory fallback: %s", exc)
+
+
+@app.on_event("shutdown")
+async def stop_risk_voice_database() -> None:
+    await close_risk_voice_database()
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
 
@@ -144,3 +160,7 @@ def login(body: LoginRequest):
         surgery_date = patient["surgery_date"],
         day_number   = patient_day_number(patient["created_at"]),
     )
+
+
+# Member 2: authenticated multimodal risk assessment and voice monitoring.
+app.mount("/risk-voice", risk_voice_app)

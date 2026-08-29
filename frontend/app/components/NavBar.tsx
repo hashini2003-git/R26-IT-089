@@ -172,14 +172,17 @@ export default function NavBar() {
   };
 
   useEffect(() => {
-    // Initial check
-    updateAuthState();
+    // Defer the client-only localStorage read until after hydration.
+    const timer = window.setTimeout(updateAuthState, 0);
 
     // Subscribe to auth changes
     const unsubscribe = subscribeToAuthChanges(updateAuthState);
 
     // Cleanup subscription on unmount
-    return unsubscribe;
+    return () => {
+      window.clearTimeout(timer);
+      unsubscribe();
+    };
   }, []);
 
   function handleLogout() {
@@ -191,7 +194,7 @@ export default function NavBar() {
   // Navigation links configuration
   const navLinks = [
     { href: "/component1", label: "Component 1" },
-    { href: "/component2", label: "Component 2" },
+    { href: "/component2", label: "Risk & Voice" },
     { href: "/component3", label: "Component 3" },
     { href: "/component4", label: "Component 4" },
   ];

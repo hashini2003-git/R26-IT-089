@@ -191,3 +191,14 @@ General steps:
 | Member 2 | IT22276278| Risk Assessment & Voice Progression Monitoring | Scikit-learn, Librosa, MFCC |
 | Member 3 | IT22285706| Speech & Voice Therapy Monitoring & Care Planning | Signal Processing, NLP, AI Classification |
 | Member 4 | IT22543882 | AI-Powered Personalized Meditation Environment | ML Recommendation, Mobile UI |
+
+---
+
+## Integrated Component 2 Web Module
+
+The authenticated risk and voice backend is located in `src/risk_voice` and is
+mounted at `/risk-voice`. Its Next.js interface is available at `/component2`,
+including structured risk assessment, voice recording, the final multimodal
+Low/Moderate/Elevated result, patient-scoped history, and weekly monitoring.
+
+See `src/risk_voice/README.md` for routes and startup instructions.

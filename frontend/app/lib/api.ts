@@ -1,4 +1,4 @@
-import type { LoginResponse, Patient, RegisterResponse } from "./types";
+import type { LoginResponse, Patient, PredictionRecord, RegisterResponse, RiskFactors, RiskResult, VoiceResult } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -11,7 +11,12 @@ function authHeaders(): Record<string, string> {
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error((err as { detail?: string }).detail ?? `Request failed (${res.status})`);
+    const detail = (err as { detail?: unknown }).detail;
+    let message = `Request failed (${res.status})`;
+    if (typeof detail === "string") message = detail;
+    else if (Array.isArray(detail)) message = detail.map(item => typeof item === "object" && item && "msg" in item ? String(item.msg) : "Invalid value").join(" ");
+    else if (detail && typeof detail === "object" && "errors" in detail && Array.isArray(detail.errors)) message = detail.errors.join(" ");
+    throw new Error(message);
   }
   return res.json() as Promise<T>;
 }
@@ -51,4 +56,46 @@ export async function login(mobileNumber: string, password: string): Promise<Log
 export async function fetchMe(): Promise<Patient> {
   const res = await fetch(`${BASE}/me`, { headers: authHeaders() });
   return handleResponse<Patient>(res);
+}
+
+// ── Component 2: authenticated risk and voice APIs ──
+const RISK_VOICE_BASE = `${BASE}/risk-voice`;
+
+export async function submitRiskFactors(payload: RiskFactors): Promise<RiskResult> {
+  const res = await fetch(`${RISK_VOICE_BASE}/api/predict/risk-factors`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(payload),
+  });
+  return handleResponse<RiskResult>(res);
+}
+
+export async function submitVoice(file: File, gender: string): Promise<VoiceResult> {
+  const body = new FormData();
+  body.append("file", file);
+  body.append("gender", gender);
+  const res = await fetch(`${RISK_VOICE_BASE}/api/predict/voice`, {
+    method: "POST",
+    headers: authHeaders(),
+    body,
+  });
+  return handleResponse<VoiceResult>(res);
+}
+
+export async function submitMultimodal(riskFactors: RiskFactors, file: File, gender: string): Promise<RiskResult> {
+  const body = new FormData();
+  body.append("riskFactors", JSON.stringify(riskFactors));
+  body.append("file", file);
+  body.append("gender", gender);
+  const res = await fetch(`${RISK_VOICE_BASE}/api/predict/multimodal`, {
+    method: "POST",
+    headers: authHeaders(),
+    body,
+  });
+  return handleResponse<RiskResult>(res);
+}
+
+export async function fetchRiskVoicePredictions(limit = 50): Promise<PredictionRecord[]> {
+  const res = await fetch(`${RISK_VOICE_BASE}/api/predictions?limit=${limit}`, { headers: authHeaders() });
+  return handleResponse<PredictionRecord[]>(res);
 }
