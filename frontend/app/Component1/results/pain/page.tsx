@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { C, FEATURE_ICON, Glass, Icon, Meter, Ring, Screen, TabBar, TopBar, loadResult, severityColor, type IpeResult } from "../../_lib/ipe-ui";
+import { Icon, FEATURE_ICON, loadResult, type IpeResult } from "../../_lib/ipe-ui";
+import { SidebarLayout, GlassCard, Ring, Meter, Reveal, DetailHeader, PageContainer, getSeverity, TEXT, TEXT2, MONO } from "../_shell";
 
 function featureNote(key: string, v: number) {
   if (key === "erythema") return v > 0.6 ? "High inflammation — likely causing burning." : v > 0.3 ? "Moderate redness present." : "Low inflammation detected.";
@@ -21,6 +22,7 @@ export default function PainDetail() {
   }, [router]);
 
   if (!result) return null;
+
   const { erythema, ulceration, texture } = result.visual_features;
   const rows: { key: "erythema" | "ulceration" | "texture"; label: string; v: number }[] = [
     { key: "erythema", label: "Erythema (redness)", v: erythema },
@@ -29,46 +31,55 @@ export default function PainDetail() {
   ];
 
   return (
-    <Screen>
-      <TopBar title="Pain Assessment" subtitle="Visual Pain Phenotyping (VPP)" />
+    <SidebarLayout title="Pain Assessment">
+      <PageContainer>
+        <DetailHeader eyebrow="Visual Pain Phenotyping (VPP)" title="Pain Assessment" subtitle="How the AI reads redness, sores, and stiffness in your scan to estimate a pain intensity score." />
 
-      <Glass style={{ marginBottom: 14, textAlign: "center", padding: "28px 20px" }}>
-        <Ring value={result.ppi.score / 10} color={result.ppi.color} size={148} stroke={13}>
-          <div style={{ fontSize: 34, fontWeight: 800, color: C.ink }}>{result.ppi.score.toFixed(1)}</div>
-          <div style={{ fontSize: 11.5, color: C.inkMuted }}>out of 10</div>
-        </Ring>
-        <div style={{
-          display: "inline-block", marginTop: 14, padding: "6px 16px", borderRadius: 20,
-          background: `${result.ppi.color}18`, color: result.ppi.color, fontWeight: 700, fontSize: 13,
-        }}>
-          {result.ppi.label}
-        </div>
-      </Glass>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Score ring */}
+          <Reveal>
+            <GlassCard style={{ textAlign: "center", padding: "28px 20px", height: "100%" }}>
+              <Ring value={result.ppi.score / 10} color={result.ppi.color} size={148} stroke={13}>
+                <div style={{ fontSize: 34, fontWeight: 800, color: TEXT, fontFamily: MONO }}>{result.ppi.score.toFixed(1)}</div>
+                <div style={{ fontSize: 11.5, color: TEXT2 }}>out of 10</div>
+              </Ring>
+              <div style={{ display: "inline-block", marginTop: 14, padding: "6px 16px", borderRadius: 20, background: `${result.ppi.color}18`, color: result.ppi.color, fontWeight: 700, fontSize: 13 }}>
+                {result.ppi.label}
+              </div>
+            </GlassCard>
+          </Reveal>
 
-      <Glass style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: C.teal, letterSpacing: 0.4, textTransform: "uppercase", marginBottom: 14 }}>
-          What we found
+          {/* Breakdown */}
+          <Reveal delay={80}>
+            <GlassCard style={{ height: "100%" }}>
+              <div style={{ fontSize: 10.5, fontWeight: 700, color: "#0D9488", letterSpacing: 1, textTransform: "uppercase", marginBottom: 14 }}>
+                What we found
+              </div>
+              {rows.map((r) => (
+                <div key={r.key} style={{ marginBottom: 16 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                    <span style={{ fontSize: 13.5, fontWeight: 600, color: TEXT, display: "inline-flex", alignItems: "center", gap: 7 }}>
+                      <Icon name={FEATURE_ICON[r.key]} size={15} color={getSeverity(r.v).color} /> {r.label}
+                    </span>
+                    <span style={{ fontSize: 12.5, color: TEXT2, fontFamily: MONO }}>{Math.round(r.v * 100)}%</span>
+                  </div>
+                  <Meter value={r.v} color={getSeverity(r.v).color} />
+                  <div style={{ fontSize: 12, color: TEXT2, marginTop: 5 }}>{featureNote(r.key, r.v)}</div>
+                </div>
+              ))}
+            </GlassCard>
+          </Reveal>
         </div>
-        {rows.map((r) => (
-          <div key={r.key} style={{ marginBottom: 16 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-              <span style={{ fontSize: 13.5, fontWeight: 600, color: C.ink, display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name={FEATURE_ICON[r.key]} size={15} color={severityColor(r.v)} /> {r.label}</span>
-              <span style={{ fontSize: 12.5, color: C.inkMuted }}>{Math.round(r.v * 100)}%</span>
+
+        <Reveal delay={140} style={{ marginTop: 16 }}>
+          <GlassCard style={{ borderLeft: `4px solid ${result.ppi.color}` }}>
+            <div style={{ fontSize: 12.5, color: TEXT, lineHeight: 1.6 }}>
+              These three visual features are combined into your PPI (Proxy Pain Intensity) score.
+              Higher redness, sore presence, and stiffness all raise your pain estimate.
             </div>
-            <Meter value={r.v} color={severityColor(r.v)} />
-            <div style={{ fontSize: 12, color: C.inkMuted, marginTop: 5 }}>{featureNote(r.key, r.v)}</div>
-          </div>
-        ))}
-      </Glass>
-
-      <Glass style={{ marginBottom: 90, borderLeft: `4px solid ${result.ppi.color}` }}>
-        <div style={{ fontSize: 12.5, color: C.ink, lineHeight: 1.6 }}>
-          These three visual features are combined into your PPI (Proxy Pain Intensity) score.
-          Higher redness, sore presence, and stiffness all raise your pain estimate.
-        </div>
-      </Glass>
-
-      <TabBar active="results" />
-    </Screen>
+          </GlassCard>
+        </Reveal>
+      </PageContainer>
+    </SidebarLayout>
   );
 }

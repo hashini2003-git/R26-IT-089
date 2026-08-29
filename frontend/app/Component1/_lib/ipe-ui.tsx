@@ -1,7 +1,11 @@
 "use client";
 
 import React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import {
+  Heart, Camera, LayoutDashboard, BarChart2, TrendingUp, GitCompare,
+  MessageSquare, Stethoscope, Menu, X,
+} from "lucide-react";
 
 /* ───────────────────────────────────────────────────────────────────────────
    IPE Design System
@@ -136,15 +140,37 @@ export function Ring({
 }) {
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
-  const offset = c * (1 - Math.min(Math.max(value, 0), 1));
+  const target = Math.min(Math.max(value, 0), 1);
+
+  // Animate from 0 on mount: without this, the SVG renders at its final
+  // strokeDashoffset on first paint and the CSS transition never has
+  // anything to interpolate from, so nothing visibly animates.
+  const [animated, setAnimated] = React.useState(0);
+  React.useEffect(() => {
+    const id = requestAnimationFrame(() => setAnimated(target));
+    return () => cancelAnimationFrame(id);
+  }, [target]);
+
+  const offset = c * (1 - animated);
+  const gradId = React.useId();
+
   return (
     <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
-      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+      <svg width={size} height={size} style={{ transform: "rotate(-90deg)", overflow: "visible" }}>
+        <defs>
+          <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={color} stopOpacity={0.65} />
+            <stop offset="100%" stopColor={color} stopOpacity={1} />
+          </linearGradient>
+        </defs>
         <circle cx={size / 2} cy={size / 2} r={r} stroke={trackColor} strokeWidth={stroke} fill="none" />
         <circle
-          cx={size / 2} cy={size / 2} r={r} stroke={color} strokeWidth={stroke} fill="none"
+          cx={size / 2} cy={size / 2} r={r} stroke={`url(#${gradId})`} strokeWidth={stroke} fill="none"
           strokeLinecap="round" strokeDasharray={c} strokeDashoffset={offset}
-          style={{ transition: "stroke-dashoffset 1s cubic-bezier(.4,0,.2,1)" }}
+          style={{
+            transition: "stroke-dashoffset 1.1s cubic-bezier(.4,0,.2,1)",
+            filter: `drop-shadow(0 0 6px ${color}55)`,
+          }}
         />
       </svg>
       <div style={{
@@ -165,6 +191,27 @@ export function Meter({ value, color }: { value: number; color: string }) {
         width: `${Math.round(value * 100)}%`, height: "100%", borderRadius: 6,
         background: color, transition: "width .8s cubic-bezier(.4,0,.2,1)",
       }} />
+    </div>
+  );
+}
+
+/* ── Fade/slide-up entrance wrapper, staggered by index ──────────────────── */
+export function RevealIn({
+  children, delay = 0, style,
+}: { children: React.ReactNode; delay?: number; style?: React.CSSProperties }) {
+  const [shown, setShown] = React.useState(false);
+  React.useEffect(() => {
+    const t = setTimeout(() => setShown(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+  return (
+    <div style={{
+      opacity: shown ? 1 : 0,
+      transform: shown ? "translateY(0)" : "translateY(14px)",
+      transition: "opacity 0.55s cubic-bezier(.4,0,.2,1), transform 0.55s cubic-bezier(.4,0,.2,1)",
+      ...style,
+    }}>
+      {children}
     </div>
   );
 }
@@ -254,43 +301,85 @@ export function ClassBar({ name, pct }: { name: string; pct: number }) {
 
 /* ── Radar / spider chart — proper axis + gridlines, not a color block ──── */
 export function RadarChart({
-  data, size = 240, color = C.teal,
+  data, size = 300, color = C.teal,
 }: { data: { label: string; value: number }[]; size?: number; color?: string }) {
   const cx = size / 2, cy = size / 2;
-  const R = size / 2 - 42;
+  const R = size / 2 - 48;
   const n = data.length;
   const angle = (i: number) => (Math.PI * 2 * i) / n - Math.PI / 2;
   const pt = (i: number, r: number) => [cx + r * Math.cos(angle(i)), cy + r * Math.sin(angle(i))];
   const rings = [0.25, 0.5, 0.75, 1];
+
+  // Animate the shape growing outward from the center on mount, instead of
+  // rendering the final polygon immediately with nothing to animate from.
+  const [grown, setGrown] = React.useState(0);
+  React.useEffect(() => {
+    const id = requestAnimationFrame(() => setGrown(1));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   const dataPts = data.map((d, i) => pt(i, R * Math.min(Math.max(d.value, 0), 1)));
   const path = dataPts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0]},${p[1]}`).join(" ") + "Z";
+  const gradId = React.useId();
+  // Outline/fill color = the most severe finding across all axes, so the
+  // overall shape gives an at-a-glance read consistent with its worst dot.
+  const worstValue = Math.max(...data.map((d) => d.value), 0);
+  const shapeColor = data.length ? severityColor(worstValue) : color;
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      {/* grid rings */}
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ overflow: "visible" }}>
+      <defs>
+        <radialGradient id={gradId} cx="50%" cy="50%" r="65%">
+          <stop offset="0%" stopColor={shapeColor} stopOpacity={0.38} />
+          <stop offset="100%" stopColor={shapeColor} stopOpacity={0.10} />
+        </radialGradient>
+      </defs>
+      {/* grid rings, with faint % labels on the top axis */}
       {rings.map((r, ri) => {
         const ringPts = data.map((_, i) => pt(i, R * r));
         const d = ringPts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0]},${p[1]}`).join(" ") + "Z";
-        return <path key={ri} d={d} fill="none" stroke="rgba(21,50,56,0.10)" strokeWidth={1} />;
+        return (
+          <g key={ri}>
+            <path d={d} fill="none" stroke="rgba(21,50,56,0.09)" strokeWidth={1} />
+            <text x={cx + 6} y={cy - R * r - 2} fontSize="9" fill={C.inkFaint} fontFamily={FONT}>
+              {Math.round(r * 100)}%
+            </text>
+          </g>
+        );
       })}
       {/* spokes */}
       {data.map((_, i) => {
         const p = pt(i, R);
-        return <line key={i} x1={cx} y1={cy} x2={p[0]} y2={p[1]} stroke="rgba(21,50,56,0.10)" strokeWidth={1} />;
+        return <line key={i} x1={cx} y1={cy} x2={p[0]} y2={p[1]} stroke="rgba(21,50,56,0.09)" strokeWidth={1} />;
       })}
-      {/* data area */}
-      <path d={path} fill={color} fillOpacity={0.16} stroke={color} strokeWidth={2} strokeLinejoin="round" />
-      {dataPts.map((p, i) => (
-        <circle key={i} cx={p[0]} cy={p[1]} r={3.5} fill={color} stroke="#fff" strokeWidth={1.5} />
-      ))}
-      {/* labels */}
+      {/* data area — scales in from the center; outline reflects the worst
+          finding among the axes, dots are individually colored by their
+          own severity so the chart matches the Normal/Mild/High/Critical
+          legend shown underneath it, instead of one flat color for all. */}
+      <g style={{
+        transform: `scale(${grown})`,
+        transformOrigin: `${cx}px ${cy}px`,
+        transition: "transform 0.9s cubic-bezier(.34,1.56,.64,1)",
+      }}>
+        <path d={path} fill={`url(#${gradId})`} stroke={shapeColor} strokeWidth={2.5} strokeLinejoin="round" filter={`drop-shadow(0 2px 8px ${shapeColor}40)`} />
+        {dataPts.map((p, i) => (
+          <circle key={i} cx={p[0]} cy={p[1]} r={5} fill={severityColor(data[i].value)} stroke="#fff" strokeWidth={2} />
+        ))}
+      </g>
+      {/* labels + value badges */}
       {data.map((d, i) => {
-        const p = pt(i, R + 24);
+        const p = pt(i, R + 30);
         return (
-          <text key={i} x={p[0]} y={p[1]} textAnchor="middle" dominantBaseline="middle"
-            fontSize="11" fontWeight={600} fill={C.inkMuted} fontFamily={FONT}>
-            {d.label}
-          </text>
+          <g key={i}>
+            <text x={p[0]} y={p[1] - 7} textAnchor="middle" dominantBaseline="middle"
+              fontSize="12" fontWeight={700} fill={C.ink} fontFamily={FONT}>
+              {d.label}
+            </text>
+            <text x={p[0]} y={p[1] + 10} textAnchor="middle" dominantBaseline="middle"
+              fontSize="11" fontWeight={700} fill={severityColor(d.value)} fontFamily={FONT}>
+              {Math.round(d.value * 100)}%
+            </text>
+          </g>
         );
       })}
     </svg>
@@ -527,4 +616,175 @@ export function loadResult(): IpeResult | null {
   if (typeof window === "undefined") return null;
   const raw = sessionStorage.getItem(KEY);
   return raw ? (JSON.parse(raw) as IpeResult) : null;
+}
+/* ─────────────────────────────────────────────────────────────────────────
+   WEB SHELL — the genuinely responsive desktop sidebar layout.
+   Same shell already used by /Component1/results, /dashboard, /progress,
+   /assistant, /compare (previously copy-pasted into each of those files).
+   Pulled out here as ONE shared source so every results sub-page (visual,
+   pain, function, risk, treatment, report) can use the same responsive
+   shell instead of the old fixed-430px mobile-only `Screen` above.
+   Uses real Tailwind breakpoints (`hidden lg:flex` / `flex lg:hidden`),
+   so it's a full sidebar on desktop and a hamburger-triggered drawer on
+   mobile — not two different apps glued together.
+───────────────────────────────────────────────────────────────────────── */
+export const WEB = {
+  blue: "#1565C0",
+  blueDeep: "#0D47A1",
+  blueTint: "#E3EEF9",
+  mint: "#0D9488",
+  mintTint: "#E0F5F3",
+  navy: "#0B1F38",
+  bg: "#F4F8FD",
+  border: "rgba(21,101,192,0.10)",
+  sidebarBg: "#0B1F38",
+  text: "#0F2137",
+  text2: "#4A6070",
+  sev: ["#2ECC91", "#F5C242", "#FF9F43", "#E8483A"],
+  font: "'Inter', system-ui, sans-serif",
+  serif: "'DM Serif Display', Georgia, serif",
+  mono: "'DM Mono', monospace",
+};
+
+export function WebCard({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <div style={{ background: "#fff", borderRadius: 20, border: `1px solid ${WEB.border}`, boxShadow: "0 2px 12px rgba(21,101,192,0.06), 0 1px 3px rgba(0,0,0,0.04)", padding: 22, ...style }}>
+      {children}
+    </div>
+  );
+}
+
+const NAV_SECTIONS = [
+  { label: "Overview", items: [{ href: "/Component1/dashboard", label: "Patient Dashboard", sub: "Summary & care plan", Icon: LayoutDashboard }] },
+  { label: "My Health", items: [
+    { href: "/Component1/results", label: "Analysis Results", sub: "Latest AI findings", Icon: BarChart2 },
+    { href: "/Component1/progress", label: "Recovery Journey", sub: "Progress tracking", Icon: TrendingUp },
+    { href: "/Component1/compare", label: "Before & After", sub: "Visual comparison", Icon: GitCompare },
+  ] },
+  { label: "Tools", items: [
+    { href: "/Component1/upload", label: "New Scan", sub: "Upload oral image", Icon: Camera },
+    { href: "/Component1/assistant", label: "AI Assistant", sub: "Get guidance", Icon: MessageSquare },
+  ] },
+];
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return <div style={{ fontSize: 9.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.6, color: "rgba(255,255,255,0.28)", padding: "16px 14px 6px", marginTop: 4 }}>{children}</div>;
+}
+
+function NavSidebar({ onClose }: { onClose?: () => void }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  return (
+    <div style={{ width: 248, background: WEB.sidebarBg, display: "flex", flexDirection: "column", height: "100%", flexShrink: 0, fontFamily: WEB.font, overflowY: "auto" }}>
+      <div style={{ padding: "22px 18px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 11, background: `linear-gradient(135deg, ${WEB.blue}, ${WEB.mint})`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: `0 4px 12px ${WEB.blue}44` }}>
+            <Heart size={17} color="#fff" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14.5, fontWeight: 700, color: "#fff", lineHeight: 1.2, fontFamily: WEB.serif }}>OralCare AI</div>
+            <div style={{ fontSize: 9.5, color: "rgba(255,255,255,0.35)", marginTop: 1, letterSpacing: 0.3 }}>Clinical Patient Portal</div>
+          </div>
+          {onClose && (
+            <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.35)", display: "flex", padding: 2 }}>
+              <X size={17} />
+            </button>
+          )}
+        </div>
+        <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 8, padding: "9px 11px", borderRadius: 11, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ width: 30, height: 30, borderRadius: "50%", background: `${WEB.blue}44`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#90CAF9" }}>P</span>
+          </div>
+          <div>
+            <div style={{ fontSize: 11.5, fontWeight: 600, color: "#fff" }}>Patient Portal</div>
+            <div style={{ fontSize: 9.5, color: "rgba(255,255,255,0.3)" }}>Secure session active</div>
+          </div>
+          <div style={{ marginLeft: "auto", width: 7, height: 7, borderRadius: "50%", background: "#2ECC91", flexShrink: 0, boxShadow: "0 0 6px #2ECC9188" }} />
+        </div>
+      </div>
+
+      <nav style={{ flex: 1, padding: "6px 10px 14px" }}>
+        {NAV_SECTIONS.map((section) => (
+          <div key={section.label}>
+            <SectionLabel>{section.label}</SectionLabel>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {section.items.map(({ href, label, sub, Icon }) => {
+                const active = pathname === href || (href === "/Component1/results" && pathname?.startsWith("/Component1/results"));
+                return (
+                  <button key={href} onClick={() => { router.push(href); onClose?.(); }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 10,
+                      border: "none", cursor: "pointer", textAlign: "left", width: "100%",
+                      background: active ? `linear-gradient(135deg, ${WEB.blue}cc, ${WEB.blueDeep}cc)` : "transparent",
+                      transition: "all .15s", fontFamily: WEB.font,
+                      boxShadow: active ? `0 3px 10px ${WEB.blue}33` : "none",
+                    }}
+                  >
+                    <div style={{ width: 32, height: 32, borderRadius: 9, background: active ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Icon size={14} color={active ? "#fff" : "rgba(255,255,255,0.45)"} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12.5, fontWeight: active ? 600 : 400, color: active ? "#fff" : "rgba(255,255,255,0.6)", lineHeight: 1.25 }}>{label}</div>
+                      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 1 }}>{sub}</div>
+                    </div>
+                    {active && <div style={{ marginLeft: "auto", width: 5, height: 5, borderRadius: "50%", background: "#90CAF9", flexShrink: 0 }} />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      <div style={{ padding: "10px 10px 20px", borderTop: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+        <button onClick={() => { router.push("/Component1/assistant"); onClose?.(); }}
+          style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "12px 13px", borderRadius: 11, border: `1px solid rgba(13,148,136,0.3)`, background: "rgba(13,148,136,0.1)", cursor: "pointer", fontFamily: WEB.font }}>
+          <div style={{ width: 30, height: 30, borderRadius: 9, background: "rgba(13,148,136,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Stethoscope size={14} color={WEB.mint} />
+          </div>
+          <div style={{ textAlign: "left" }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: WEB.mint, lineHeight: 1.2 }}>Message Care Team</div>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", marginTop: 1 }}>AI-powered assistant</div>
+          </div>
+        </button>
+        <div style={{ marginTop: 12, fontSize: 9, color: "rgba(255,255,255,0.18)", textAlign: "center", letterSpacing: 0.3 }}>
+          OralCare AI v3.0 · HIPAA-aligned · Encrypted
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function SidebarLayout({ title, children }: { title: string; children: React.ReactNode }) {
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+  return (
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden", fontFamily: WEB.font, background: WEB.bg }}>
+      <div className="hidden lg:flex" style={{ flexDirection: "column", height: "100%", flexShrink: 0 }}>
+        <NavSidebar />
+      </div>
+      {mobileOpen && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex" }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(3px)" }} onClick={() => setMobileOpen(false)} />
+          <div style={{ position: "relative", height: "100%", width: 248, zIndex: 1 }}>
+            <NavSidebar onClose={() => setMobileOpen(false)} />
+          </div>
+        </div>
+      )}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
+        <div className="flex lg:hidden" style={{ alignItems: "center", gap: 12, padding: "12px 16px", background: "#fff", borderBottom: `1px solid ${WEB.border}`, flexShrink: 0 }}>
+          <button onClick={() => setMobileOpen(true)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", padding: 4 }}>
+            <Menu size={20} color={WEB.navy} />
+          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 8, background: `linear-gradient(135deg, ${WEB.blue}, ${WEB.mint})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Heart size={13} color="#fff" />
+            </div>
+            <span style={{ fontSize: 14, fontWeight: 700, color: WEB.navy, fontFamily: WEB.serif }}>OralCare AI</span>
+          </div>
+          <div style={{ marginLeft: "auto", fontSize: 11.5, color: WEB.text2 }}>{title}</div>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto" }}>{children}</div>
+      </div>
+    </div>
+  );
 }

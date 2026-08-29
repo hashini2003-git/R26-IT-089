@@ -1,7 +1,6 @@
 "use client";
 
 import SideBar from "@/app/vocal_therapy/components/SideBar";
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const D = {
@@ -27,11 +26,9 @@ export default function VocalTherapyLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
   const [screenSize, setScreenSize] = useState<'mobile' | 'tablet' | 'laptop' | 'desktop'>('desktop');
 
-  useEffect(() => {
-    const checkScreenSize = () => {
+  const checkScreenSize = () => {
       const width = window.innerWidth;
       if (width < D.breakpoints.mobile) {
         setScreenSize('mobile');
@@ -43,6 +40,8 @@ export default function VocalTherapyLayout({
         setScreenSize('desktop');
       }
     };
+
+  useEffect(() => {
     checkScreenSize();
     window.addEventListener("resize", checkScreenSize);
     return () => window.removeEventListener("resize", checkScreenSize);

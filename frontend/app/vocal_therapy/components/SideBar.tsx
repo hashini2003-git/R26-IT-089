@@ -434,6 +434,17 @@ const SideBar = memo(function SideBar() {
       paddingTop: 24,
     }}>
       <SidebarLink
+        href="/home"
+        icon={
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M2.5 8.5L10 2.5l7.5 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M4.5 7v9h11V7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        }
+        label="Back to Home"
+        active={pathname === "/home"}
+      />
+      <SidebarLink
         href="/vocal_therapy/guide"
         icon={
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -554,9 +565,9 @@ const SideBar = memo(function SideBar() {
     <aside
       style={{
         width: sidebarWidth,
-        height: "calc(100vh - 60px)",
+        height: "100vh",
         position: "fixed",
-        top: 60,
+        top: 0,
         left: 0,
         background: D.sidebarBg,
         borderRight: `1px solid ${D.border}`,

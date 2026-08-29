@@ -1,157 +1,314 @@
 "use client";
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { Screen, TabBar } from "../_lib/ipe-ui";
+
+import { useEffect, useRef, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import {
+  Heart, Camera, LayoutDashboard, BarChart2, TrendingUp, GitCompare,
+  MessageSquare, Stethoscope, Menu, X, ChevronRight, CheckCircle2,
+} from "lucide-react";
+import { loadResult, type IpeResult } from "../_lib/ipe-ui";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-type Result = {
-  classification : { name: string; confidence: number };
-  ppi            : { score: number; label: string };
-  fis            : { speech: number; swallowing: number; mouth: number };
-  visual_features: { erythema: number; ulceration: number; texture: number; physio: number };
-  urgency        : { emoji: string; timeframe: string; color: string };
-};
+/* ── Palette ─────────────────────────────────────────────────── */
+const BLUE = "#1565C0";
+const BLUE_TINT = "#E3EEF9";
+const MINT = "#0D9488";
+const MINT_TINT = "#E0F5F3";
+const NAVY = "#0B1F38";
+const BG = "#F4F8FD";
+const BORDER = "rgba(21,101,192,0.10)";
+const SIDEBAR_BG = "#0B1F38";
+const TEXT = "#0F2137";
+const TEXT2 = "#4A6070";
+const SEV = ["#2ECC91", "#F5C242", "#FF9F43", "#FF6B5B", "#E8483A"];
+const FONT = "'Inter', system-ui, sans-serif";
+const SERIF = "'DM Serif Display', Georgia, serif";
+const MONO = "'DM Mono', monospace";
 
-function ppiColor(p: number) {
-  if (p <= 1) return "#00B4A0"; if (p <= 3) return "#7BC67E";
-  if (p <= 5) return "#FFD166"; if (p <= 7.5) return "#F4845F";
-  return "#E63946";
+function ppiColor(p: number) { return p <= 1 ? SEV[0] : p <= 3 ? SEV[1] : p <= 5 ? SEV[2] : p <= 7.5 ? SEV[3] : SEV[4]; }
+
+type Visit = { id: string; date: string; classification: string; ppi: number; fis_speech: number; fis_swallow: number; fis_mouth: number; erythema: number; ulceration: number; texture: number; };
+function loadVisits(): Visit[] { try { const r = localStorage.getItem("ipe_visits"); return r ? JSON.parse(r) : []; } catch { return []; } }
+
+function GlassCard({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return <div style={{ background: "#fff", borderRadius: 20, border: `1px solid ${BORDER}`, boxShadow: "0 2px 12px rgba(21,101,192,0.06), 0 1px 3px rgba(0,0,0,0.04)", padding: 22, ...style }}>{children}</div>;
 }
-
-function MiniBar({ value, color }: { value: number; color: string }) {
+function SevBadge({ label, color }: { label: string; color: string }) {
+  return <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: `${color}18`, color, letterSpacing: 0.3 }}>{label}</span>;
+}
+function Meter({ value, color, height = 8 }: { value: number; color: string; height?: number }) {
   return (
-    <div style={{ background:"rgba(13,33,55,0.06)", borderRadius:99, height:7, overflow:"hidden", flex:1 }}>
-      <div style={{ width:`${value*100}%`, height:7, borderRadius:99, background:color, transition:"width 1s ease", boxShadow:`0 0 6px ${color}44` }}/>
+    <div style={{ width: "100%", height, borderRadius: height, background: "rgba(21,101,192,0.07)", overflow: "hidden" }}>
+      <div style={{ width: `${Math.round(value * 100)}%`, height: "100%", borderRadius: height, background: color, transition: "width 1s cubic-bezier(.4,0,.2,1)" }} />
     </div>
   );
 }
 
-function ChangeChip({ before, after, invert=false }: { before: number; after: number; invert?: boolean }) {
-  const diff = after - before;
-  const good = invert ? diff < 0 : diff > 0;
-  const pct  = Math.abs(diff * 100).toFixed(0);
-  if (Math.abs(diff) < 0.01) return <span style={{ fontSize:11, color:"#8FA3B1", fontWeight:600 }}>—</span>;
+/* ── Sidebar shell ────────────────────────────────────────────── */
+const NAV_SECTIONS = [
+  { label: "Overview", items: [{ href: "/Component1/dashboard", label: "Patient Dashboard", sub: "Summary & care plan", Icon: LayoutDashboard }] },
+  { label: "My Health", items: [
+    { href: "/Component1/results", label: "Analysis Results", sub: "Latest AI findings", Icon: BarChart2 },
+    { href: "/Component1/progress", label: "Recovery Journey", sub: "Progress tracking", Icon: TrendingUp },
+    { href: "/Component1/compare", label: "Before & After", sub: "Visual comparison", Icon: GitCompare },
+  ] },
+  { label: "Tools", items: [
+    { href: "/Component1/upload", label: "New Scan", sub: "Upload oral image", Icon: Camera },
+    { href: "/Component1/assistant", label: "AI Assistant", sub: "Get guidance", Icon: MessageSquare },
+    { href: "/Component1/doctors", label: "Find a Doctor", sub: "Doctor recommendation", Icon: Stethoscope },
+  ] },
+];
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return <div style={{ fontSize: 9.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.6, color: "rgba(255,255,255,0.28)", padding: "16px 14px 6px", marginTop: 4 }}>{children}</div>;
+}
+function NavSidebar({ onClose }: { onClose?: () => void }) {
+  const router = useRouter();
+  const pathname = usePathname();
   return (
-    <span style={{ fontSize:11, fontWeight:800, color:good?"#00B4A0":"#E63946", background:good?"rgba(0,180,160,0.1)":"rgba(230,57,70,0.1)", borderRadius:20, padding:"2px 8px" }}>
-      {diff > 0 ? "↑" : "↓"}{pct}%
-    </span>
+    <div style={{ width: 248, background: SIDEBAR_BG, display: "flex", flexDirection: "column", height: "100%", flexShrink: 0, fontFamily: FONT, overflowY: "auto" }}>
+      <div style={{ padding: "22px 18px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 11, background: `linear-gradient(135deg, ${BLUE}, ${MINT})`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: `0 4px 12px ${BLUE}44` }}>
+            <Heart size={17} color="#fff" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14.5, fontWeight: 700, color: "#fff", lineHeight: 1.2, fontFamily: SERIF }}>OralCare AI</div>
+            <div style={{ fontSize: 9.5, color: "rgba(255,255,255,0.35)", marginTop: 1, letterSpacing: 0.3 }}>Clinical Patient Portal</div>
+          </div>
+          {onClose && (
+            <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.35)", display: "flex", padding: 2 }}>
+              <X size={17} />
+            </button>
+          )}
+        </div>
+        <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 8, padding: "9px 11px", borderRadius: 11, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ width: 30, height: 30, borderRadius: "50%", background: `${BLUE}44`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#90CAF9" }}>P</span>
+          </div>
+          <div>
+            <div style={{ fontSize: 11.5, fontWeight: 600, color: "#fff" }}>Patient Portal</div>
+            <div style={{ fontSize: 9.5, color: "rgba(255,255,255,0.3)" }}>Secure session active</div>
+          </div>
+          <div style={{ marginLeft: "auto", width: 7, height: 7, borderRadius: "50%", background: "#2ECC91", flexShrink: 0, boxShadow: "0 0 6px #2ECC9188" }} />
+        </div>
+      </div>
+      <nav style={{ flex: 1, padding: "6px 10px 14px" }}>
+        {NAV_SECTIONS.map((section) => (
+          <div key={section.label}>
+            <SectionLabel>{section.label}</SectionLabel>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {section.items.map(({ href, label, sub, Icon }) => {
+                const active = pathname === href;
+                return (
+                  <button key={href} onClick={() => { router.push(href); onClose?.(); }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 10,
+                      border: "none", cursor: "pointer", textAlign: "left", width: "100%",
+                      background: active ? `linear-gradient(135deg, ${BLUE}cc, #0D47A1cc)` : "transparent",
+                      transition: "all .15s", fontFamily: FONT,
+                      boxShadow: active ? `0 3px 10px ${BLUE}33` : "none",
+                    }}
+                  >
+                    <div style={{ width: 32, height: 32, borderRadius: 9, background: active ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Icon size={14} color={active ? "#fff" : "rgba(255,255,255,0.45)"} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12.5, fontWeight: active ? 600 : 400, color: active ? "#fff" : "rgba(255,255,255,0.6)", lineHeight: 1.25 }}>{label}</div>
+                      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 1 }}>{sub}</div>
+                    </div>
+                    {active && <div style={{ marginLeft: "auto", width: 5, height: 5, borderRadius: "50%", background: "#90CAF9", flexShrink: 0 }} />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
+      <div style={{ padding: "10px 10px 20px", borderTop: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+        <button onClick={() => { router.push("/Component1/assistant"); onClose?.(); }}
+          style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "12px 13px", borderRadius: 11, border: `1px solid rgba(13,148,136,0.3)`, background: "rgba(13,148,136,0.1)", cursor: "pointer", fontFamily: FONT }}>
+          <div style={{ width: 30, height: 30, borderRadius: 9, background: "rgba(13,148,136,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Stethoscope size={14} color={MINT} />
+          </div>
+          <div style={{ textAlign: "left" }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: MINT, lineHeight: 1.2 }}>Message Care Team</div>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", marginTop: 1 }}>AI-powered assistant</div>
+          </div>
+        </button>
+        <div style={{ marginTop: 12, fontSize: 9, color: "rgba(255,255,255,0.18)", textAlign: "center", letterSpacing: 0.3 }}>
+          OralCare AI v3.0 · HIPAA-aligned · Encrypted
+        </div>
+      </div>
+    </div>
+  );
+}
+function SidebarLayout({ title, children }: { title: string; children: React.ReactNode }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  return (
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden", fontFamily: FONT, background: BG }}>
+      <div className="hidden lg:flex" style={{ flexDirection: "column", height: "100%", flexShrink: 0 }}>
+        <NavSidebar />
+      </div>
+      {mobileOpen && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex" }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(3px)" }} onClick={() => setMobileOpen(false)} />
+          <div style={{ position: "relative", height: "100%", width: 248, zIndex: 1 }}>
+            <NavSidebar onClose={() => setMobileOpen(false)} />
+          </div>
+        </div>
+      )}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
+        <div className="flex lg:hidden" style={{ alignItems: "center", gap: 12, padding: "12px 16px", background: "#fff", borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
+          <button onClick={() => setMobileOpen(true)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", padding: 4 }}>
+            <Menu size={20} color={NAVY} />
+          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 8, background: `linear-gradient(135deg, ${BLUE}, ${MINT})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Heart size={13} color="#fff" />
+            </div>
+            <span style={{ fontSize: 14, fontWeight: 700, color: NAVY, fontFamily: SERIF }}>OralCare AI</span>
+          </div>
+          <div style={{ marginLeft: "auto", fontSize: 11.5, color: TEXT2 }}>{title}</div>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto" }}>{children}</div>
+      </div>
+    </div>
   );
 }
 
-export default function ComparePage() {
+/* ── Compare content ─────────────────────────────────────────── */
+function CompareContent({ visits }: { visits: Visit[] }) {
   const router = useRouter();
-  const [beforeImg, setBeforeImg]   = useState<File|null>(null);
-  const [afterImg, setAfterImg]     = useState<File|null>(null);
-  const [beforePrev, setBeforePrev] = useState<string|null>(null);
-  const [afterPrev, setAfterPrev]   = useState<string|null>(null);
-  const [beforeRes, setBeforeRes]   = useState<Result|null>(null);
-  const [afterRes, setAfterRes]     = useState<Result|null>(null);
-  const [loading, setLoading]       = useState<"before"|"after"|"both"|null>(null);
-  const [error, setError]           = useState<string|null>(null);
+  const [beforeImg, setBeforeImg] = useState<File | null>(null);
+  const [afterImg, setAfterImg] = useState<File | null>(null);
+  const [beforePrev, setBeforePrev] = useState<string | null>(null);
+  const [afterPrev, setAfterPrev] = useState<string | null>(null);
+  const [beforeRes, setBeforeRes] = useState<IpeResult | null>(null);
+  const [afterRes, setAfterRes] = useState<IpeResult | null>(null);
+  const [loading, setLoading] = useState<"before" | "after" | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const beforeRef = useRef<HTMLInputElement>(null);
-  const afterRef  = useRef<HTMLInputElement>(null);
+  const afterRef = useRef<HTMLInputElement>(null);
 
-  const pickImage = (side: "before"|"after") =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const f = e.target.files?.[0]; if (!f) return;
+  function pickImage(side: "before" | "after") {
+    return (e: React.ChangeEvent<HTMLInputElement>) => {
+      const f = e.target.files?.[0];
+      if (!f) return;
       const u = URL.createObjectURL(f);
-      if (side==="before") { setBeforeImg(f); setBeforePrev(u); setBeforeRes(null); }
-      else                 { setAfterImg(f);  setAfterPrev(u);  setAfterRes(null); }
+      if (side === "before") { setBeforeImg(f); setBeforePrev(u); setBeforeRes(null); }
+      else { setAfterImg(f); setAfterPrev(u); setAfterRes(null); }
     };
+  }
 
-  const analyzeOne = async (file: File, side: "before"|"after") => {
-    setLoading(side); setError(null);
+  async function analyzeOne(side: "before" | "after") {
+    const file = side === "before" ? beforeImg : afterImg;
+    if (!file) return;
+    setLoading(side);
+    setError(null);
     try {
-      const fd = new FormData(); fd.append("file", file);
-      const res = await fetch(`${API}/predict`, { method:"POST", body:fd });
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`${API}/predict`, { method: "POST", body: fd });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Failed");
-      if (side==="before") setBeforeRes(data);
-      else                  setAfterRes(data);
-    } catch(e:any) { setError(e.message); }
-    finally { setLoading(null); }
-  };
-
-  const analyzeAll = async () => {
-    if (!beforeImg || !afterImg) return;
-    setLoading("both"); setError(null);
-    try {
-      const fd1 = new FormData(); fd1.append("file", beforeImg);
-      const fd2 = new FormData(); fd2.append("file", afterImg);
-      const [r1, r2] = await Promise.all([
-        fetch(`${API}/predict`, {method:"POST",body:fd1}).then(r=>r.json()),
-        fetch(`${API}/predict`, {method:"POST",body:fd2}).then(r=>r.json()),
-      ]);
-      setBeforeRes(r1); setAfterRes(r2);
-    } catch(e:any) { setError(e.message); }
-    finally { setLoading(null); }
-  };
+      if (!res.ok) throw new Error(data.detail || "Analysis failed.");
+      if (side === "before") setBeforeRes(data as IpeResult); else setAfterRes(data as IpeResult);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not reach the server.");
+    } finally {
+      setLoading(null);
+    }
+  }
 
   const ppiChange = beforeRes && afterRes ? beforeRes.ppi.score - afterRes.ppi.score : null;
-  const improving = ppiChange !== null && ppiChange > 0;
+  const improved = ppiChange !== null && ppiChange > 0;
+
+  const compareFeatures = [
+    { label: "Redness (Erythema)", key: "erythema" as const },
+    { label: "Open Sores (Ulceration)", key: "ulceration" as const },
+    { label: "Tissue Stiffness", key: "texture" as const },
+  ];
 
   return (
-    <Screen>
-      {/* Header */}
-      <div style={{ background:`linear-gradient(135deg,#0D2137,#1A3550)`, padding:"env(safe-area-inset-top,44px) 20px 28px", overflow:"hidden", position:"relative", margin:"-20px -18px 16px" }}>
-        <div style={{ position:"absolute",top:-40,right:-40,width:180,height:180,borderRadius:"50%",background:"rgba(255,255,255,0.05)",pointerEvents:"none" }}/>
-        <button onClick={()=>router.back()} style={{ width:38,height:38,borderRadius:19,border:"none",background:"rgba(255,255,255,0.1)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+    <div style={{ padding: "28px 26px 48px", maxWidth: 980, margin: "0 auto", fontFamily: FONT }}>
+      <style>{`@keyframes spinComp{to{transform:rotate(360deg)}}`}</style>
+      <div style={{ marginBottom: 24, display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.3, color: MINT, marginBottom: 5 }}>Visual Comparison</div>
+          <h1 style={{ fontSize: 26, fontWeight: 400, color: NAVY, margin: "0 0 5px", fontFamily: SERIF }}>Before &amp; After</h1>
+          <p style={{ fontSize: 13, color: TEXT2, margin: 0 }}>Compare two scans side-by-side to measure your progress.</p>
+        </div>
+        <button onClick={() => router.push("/Component1/progress")} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", borderRadius: 999, background: BLUE_TINT, border: `1px solid ${BLUE}28`, color: BLUE, fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: FONT }}>
+          <TrendingUp size={14} /> Recovery Journey
         </button>
-        <div style={{ fontSize:11,color:"rgba(255,255,255,0.6)",fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",marginBottom:4 }}>IPE Framework</div>
-        <h1 style={{ fontSize:26,fontWeight:800,color:"#fff",margin:"0 0 4px",letterSpacing:"-0.03em" }}>Before &amp; After</h1>
-        <p style={{ fontSize:13,color:"rgba(255,255,255,0.6)",margin:0 }}>Compare two images to track your recovery</p>
       </div>
 
-      {error && (
-        <div style={{ background:"rgba(230,57,70,0.08)",border:"1px solid rgba(230,57,70,0.25)",borderRadius:14,padding:"10px 14px",marginBottom:14 }}>
-          <p style={{ margin:0,color:"#E63946",fontSize:13,fontWeight:600 }}>{error}</p>
+      {visits.length >= 2 && (
+        <div style={{ marginBottom: 18, padding: "13px 18px", borderRadius: 14, background: MINT_TINT, border: `1px solid ${MINT}28`, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <CheckCircle2 size={15} color={MINT} />
+          <span style={{ fontSize: 12.5, color: TEXT2, flex: 1 }}>
+            You have <strong style={{ color: MINT }}>{visits.length} recorded visits</strong> in your recovery journey.
+          </span>
+          <button onClick={() => router.push("/Component1/progress")} style={{ background: "none", border: "none", cursor: "pointer", color: MINT, fontSize: 12.5, fontWeight: 700, fontFamily: FONT, padding: 0, display: "flex", alignItems: "center", gap: 4 }}>
+            View history <ChevronRight size={13} />
+          </button>
         </div>
       )}
 
-      {/* Upload row */}
-      <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16 }}>
-        {(["before","after"] as const).map(side=>{
-          const prev = side==="before" ? beforePrev : afterPrev;
-          const res  = side==="before" ? beforeRes  : afterRes;
-          const file = side==="before" ? beforeImg  : afterImg;
-          const ref  = side==="before" ? beforeRef  : afterRef;
-          const isLoading = loading===side || loading==="both";
-          const sideColor = side==="before" ? "#F4845F" : "#00B4A0";
+      {error && (
+        <div style={{ marginBottom: 18, padding: "12px 16px", borderRadius: 14, background: "#FDEDEB", color: "#E8483A", fontSize: 13, fontWeight: 600 }}>{error}</div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+        {(["before", "after"] as const).map(side => {
+          const prev = side === "before" ? beforePrev : afterPrev;
+          const res = side === "before" ? beforeRes : afterRes;
+          const ref = side === "before" ? beforeRef : afterRef;
+          const c = side === "before" ? SEV[2] : SEV[0];
+          const label = side === "before" ? "Before" : "After";
           return (
             <div key={side}>
-              <div style={{ fontSize:11,fontWeight:800,color:sideColor,textTransform:"uppercase",letterSpacing:1,marginBottom:8 }}>
-                {side==="before" ? "Before" : "After"}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <span style={{ width: 10, height: 10, borderRadius: "50%", background: c, display: "inline-block", boxShadow: `0 0 6px ${c}88` }} />
+                <span style={{ fontSize: 12, fontWeight: 700, color: c, textTransform: "uppercase", letterSpacing: 1 }}>{label} photo</span>
               </div>
-              <div onClick={()=>ref.current?.click()} style={{ border:`2px dashed ${prev?"transparent":sideColor+"44"}`, borderRadius:18, overflow:"hidden", cursor:"pointer", minHeight:160, display:"flex", alignItems:"center", justifyContent:"center", background:prev?"#000":`${sideColor}0d`, position:"relative" }}>
+              <div onClick={() => ref.current?.click()}
+                style={{ border: `2px dashed ${prev ? "transparent" : c + "44"}`, borderRadius: 20, overflow: "hidden", cursor: "pointer", minHeight: 190, display: "flex", alignItems: "center", justifyContent: "center", background: prev ? "#000" : `${c}07`, position: "relative", boxShadow: prev ? "0 4px 24px rgba(0,0,0,0.18)" : "none", transition: "all .2s" }}>
                 {prev ? (
                   <>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={prev} alt={side} style={{ width:"100%",height:160,objectFit:"cover",display:"block",opacity:isLoading?0.4:1 }}/>
+                    <img src={prev} alt={side} style={{ width: "100%", height: 190, objectFit: "cover", display: "block", opacity: loading === side ? 0.35 : 1 }} />
                     {res && (
-                      <div style={{ position:"absolute",bottom:6,left:6,right:6,background:"rgba(13,27,42,0.75)",backdropFilter:"blur(8px)",borderRadius:10,padding:"6px 10px" }}>
-                        <div style={{ fontSize:16,fontWeight:900,color:ppiColor(res.ppi.score) }}>{res.ppi.score.toFixed(1)}<span style={{ fontSize:10,color:"rgba(255,255,255,0.6)" }}>/10</span></div>
-                        <div style={{ fontSize:10,color:"rgba(255,255,255,0.7)",fontWeight:600 }}>{res.classification.name}</div>
+                      <div style={{ position: "absolute", bottom: 10, left: 10, right: 10, background: "rgba(11,31,56,0.85)", backdropFilter: "blur(10px)", borderRadius: 14, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+                        <div>
+                          <div style={{ fontSize: 22, fontWeight: 700, color: ppiColor(res.ppi.score), fontFamily: MONO, lineHeight: 1 }}>{res.ppi.score.toFixed(1)}<span style={{ fontSize: 11, color: "rgba(255,255,255,0.45)" }}>/{res.ppi.max ?? 10}</span></div>
+                          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>{res.classification.name}</div>
+                        </div>
+                        <div style={{ marginLeft: "auto" }}>
+                          <SevBadge label={res.ppi.label} color={ppiColor(res.ppi.score)} />
+                        </div>
                       </div>
                     )}
-                    {isLoading && (
-                      <div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.3)" }}>
-                        <div style={{ width:32,height:32,borderRadius:"50%",border:`3px solid ${sideColor}`,borderTopColor:"transparent",animation:"spin 0.8s linear infinite" }}/>
+                    {loading === side && (
+                      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.3)" }}>
+                        <div style={{ width: 36, height: 36, borderRadius: "50%", border: `3px solid ${c}`, borderTopColor: "transparent", animation: "spinComp .7s linear infinite" }} />
                       </div>
                     )}
                   </>
                 ) : (
-                  <div style={{ textAlign:"center",padding:16 }}>
-                    <div style={{ fontSize:12,fontWeight:600,color:sideColor }}>Add {side} photo</div>
+                  <div style={{ textAlign: "center", padding: 28 }}>
+                    <div style={{ width: 56, height: 56, borderRadius: 16, background: `${c}12`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
+                      <Camera size={26} color={c} strokeWidth={1.5} />
+                    </div>
+                    <div style={{ fontSize: 13.5, fontWeight: 600, color: c, marginBottom: 4 }}>Add {label.toLowerCase()} photo</div>
+                    <div style={{ fontSize: 12, color: TEXT2 }}>Click to upload or drag here</div>
                   </div>
                 )}
               </div>
-              <input ref={ref} type="file" accept="image/*" style={{ display:"none" }} onChange={pickImage(side)}/>
-              {file && !res && (
-                <button onClick={()=>analyzeOne(file,side)} disabled={isLoading}
-                  style={{ width:"100%",marginTop:8,background:sideColor,color:"#fff",border:"none",borderRadius:12,padding:"9px",fontSize:12,fontWeight:700,cursor:"pointer" }}>
-                  Analyze →
+              <input ref={ref} type="file" accept="image/*" style={{ display: "none" }} onChange={pickImage(side)} />
+              {prev && !res && loading !== side && (
+                <button onClick={() => analyzeOne(side)} style={{ width: "100%", marginTop: 12, background: `linear-gradient(135deg, ${c}, ${c}bb)`, color: "#fff", border: "none", borderRadius: 14, padding: "12px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT, boxShadow: `0 4px 16px ${c}40` }}>
+                  Analyze {label} photo →
                 </button>
               )}
             </div>
@@ -159,133 +316,73 @@ export default function ComparePage() {
         })}
       </div>
 
-      {/* Analyze both */}
-      {beforeImg && afterImg && !beforeRes && !afterRes && (
-        <button onClick={analyzeAll} disabled={loading==="both"}
-          style={{ width:"100%",background:"linear-gradient(135deg,#0D2137,#1A3550)",color:"#fff",border:"none",borderRadius:16,padding:"15px",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:16,boxShadow:"0 8px 24px rgba(13,33,55,0.25)" }}>
-          {loading==="both" ? "Analyzing both images..." : "Analyze Both Images →"}
-        </button>
-      )}
-
-      {/* Results comparison */}
       {beforeRes && afterRes && (
         <>
-          <div style={{ background:improving?"rgba(0,180,160,0.08)":"rgba(230,57,70,0.08)", border:`1px solid ${improving?"rgba(0,180,160,0.25)":"rgba(230,57,70,0.25)"}`, borderRadius:18, padding:18, marginBottom:16, textAlign:"center" }}>
-            <div style={{ fontSize:22,fontWeight:900,color:improving?"#00B4A0":"#E63946",letterSpacing:"-0.03em",marginBottom:4 }}>
-              {improving ? `Pain reduced by ${ppiChange!.toFixed(1)} points` : `Pain increased by ${Math.abs(ppiChange!).toFixed(1)} points`}
+          <GlassCard style={{ marginBottom: 18, textAlign: "center", background: improved ? "#E9F9F2" : "#FDEDEB", border: `1px solid ${improved ? SEV[0] : SEV[4]}30` }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: improved ? SEV[0] : SEV[4], marginBottom: 7 }}>
+              {improved ? `Pain reduced by ${ppiChange!.toFixed(1)} points` : `Pain increased by ${Math.abs(ppiChange!).toFixed(1)} points`}
             </div>
-            <div style={{ fontSize:13,color:"#4A6278" }}>
-              {beforeRes.ppi.score.toFixed(1)}/10 → {afterRes.ppi.score.toFixed(1)}/10
+            <div style={{ fontSize: 14, color: TEXT2, marginBottom: 5 }}>
+              Before: <strong style={{ color: ppiColor(beforeRes.ppi.score), fontFamily: MONO }}>{beforeRes.ppi.score.toFixed(1)}/{beforeRes.ppi.max ?? 10}</strong> → After: <strong style={{ color: ppiColor(afterRes.ppi.score), fontFamily: MONO }}>{afterRes.ppi.score.toFixed(1)}/{afterRes.ppi.max ?? 10}</strong>
             </div>
-            {improving && (
-              <div style={{ marginTop:12,background:"rgba(0,180,160,0.1)",borderRadius:12,padding:"8px 16px",display:"inline-block" }}>
-                <span style={{ fontSize:13,fontWeight:700,color:"#00B4A0" }}>
-                  {((ppiChange!/beforeRes.ppi.score)*100).toFixed(0)}% improvement in pain score
-                </span>
-              </div>
-            )}
-          </div>
+            {improved && <div style={{ fontSize: 12.5, color: SEV[0], fontWeight: 600 }}>Keep following your care plan — you are making progress!</div>}
+          </GlassCard>
 
-          <div style={{ background:"#fff",borderRadius:22,padding:20,boxShadow:"0 2px 16px rgba(13,33,55,0.08)",marginBottom:12 }}>
-            <div style={{ fontSize:11,fontWeight:800,color:"#00B4A0",textTransform:"uppercase",letterSpacing:1,marginBottom:14 }}>Pain Score Comparison</div>
-            <div style={{ display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:12,alignItems:"center" }}>
-              <div style={{ textAlign:"center",background:"rgba(244,132,95,0.06)",borderRadius:14,padding:14 }}>
-                <div style={{ fontSize:10,color:"#8FA3B1",fontWeight:700,marginBottom:4 }}>BEFORE</div>
-                <div style={{ fontSize:36,fontWeight:900,color:ppiColor(beforeRes.ppi.score),letterSpacing:"-0.04em" }}>{beforeRes.ppi.score.toFixed(1)}</div>
-                <div style={{ fontSize:11,color:ppiColor(beforeRes.ppi.score),fontWeight:600 }}>{beforeRes.ppi.label}</div>
-              </div>
-              <div style={{ fontSize:28,textAlign:"center" }}>→</div>
-              <div style={{ textAlign:"center",background:"rgba(0,180,160,0.06)",borderRadius:14,padding:14 }}>
-                <div style={{ fontSize:10,color:"#8FA3B1",fontWeight:700,marginBottom:4 }}>AFTER</div>
-                <div style={{ fontSize:36,fontWeight:900,color:ppiColor(afterRes.ppi.score),letterSpacing:"-0.04em" }}>{afterRes.ppi.score.toFixed(1)}</div>
-                <div style={{ fontSize:11,color:ppiColor(afterRes.ppi.score),fontWeight:600 }}>{afterRes.ppi.label}</div>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ background:"#fff",borderRadius:22,padding:20,boxShadow:"0 2px 16px rgba(13,33,55,0.08)",marginBottom:12 }}>
-            <div style={{ fontSize:11,fontWeight:800,color:"#00B4A0",textTransform:"uppercase",letterSpacing:1,marginBottom:16 }}>Visual Features Comparison</div>
-            {([
-              ["Erythema","erythema","#F4845F",true],
-              ["Ulceration","ulceration","#FFD166",true],
-              ["Texture","texture","#8B4513",true],
-              ["Physio Filter","physio","#00B4A0",false],
-            ] as [string,keyof Result["visual_features"],string,boolean][]).map(([label,key,color,lower])=>{
+          <GlassCard style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: MINT, marginBottom: 16 }}>Symptom Comparison</div>
+            {compareFeatures.map(({ label, key }) => {
               const bv = beforeRes.visual_features[key];
               const av = afterRes.visual_features[key];
+              const diff = av - bv;
+              const good = diff < 0;
               return (
-                <div key={key} style={{ marginBottom:16 }}>
-                  <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6 }}>
-                    <span style={{ fontSize:13,fontWeight:600,color:"#0D2137" }}>{label}</span>
-                    <ChangeChip before={bv} after={av} invert={lower}/>
+                <div key={label} style={{ marginBottom: 20 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 9, alignItems: "center" }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{label}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: good ? SEV[0] : SEV[2], background: good ? `${SEV[0]}12` : `${SEV[2]}12`, borderRadius: 20, padding: "4px 11px" }}>
+                      {diff < 0 ? "↓" : "↑"}{Math.abs(diff * 100).toFixed(0)}% {good ? "better" : "worse"}
+                    </span>
                   </div>
-                  <div style={{ display:"grid",gridTemplateColumns:"1fr 24px 1fr",gap:8,alignItems:"center" }}>
-                    <MiniBar value={bv} color={"#F4845F"}/>
-                    <div style={{ fontSize:10,color:"#8FA3B1",textAlign:"center" }}>→</div>
-                    <MiniBar value={av} color={color}/>
-                  </div>
-                  <div style={{ display:"flex",justifyContent:"space-between",marginTop:3 }}>
-                    <span style={{ fontSize:10,color:"#8FA3B1" }}>{(bv*100).toFixed(0)}%</span>
-                    <span style={{ fontSize:10,color:"#8FA3B1" }}>{(av*100).toFixed(0)}%</span>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 20px 1fr", gap: 8, alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontSize: 10.5, color: TEXT2, marginBottom: 5 }}>Before: <strong style={{ fontFamily: MONO }}>{(bv * 100).toFixed(0)}%</strong></div>
+                      <Meter value={bv} color={SEV[2]} height={8} />
+                    </div>
+                    <span style={{ fontSize: 13, color: TEXT2, textAlign: "center" }}>→</span>
+                    <div>
+                      <div style={{ fontSize: 10.5, color: TEXT2, marginBottom: 5 }}>After: <strong style={{ fontFamily: MONO }}>{(av * 100).toFixed(0)}%</strong></div>
+                      <Meter value={av} color={good ? SEV[0] : SEV[4]} height={8} />
+                    </div>
                   </div>
                 </div>
               );
             })}
-          </div>
-
-          <div style={{ background:"#fff",borderRadius:22,padding:20,boxShadow:"0 2px 16px rgba(13,33,55,0.08)",marginBottom:12 }}>
-            <div style={{ fontSize:11,fontWeight:800,color:"#00B4A0",textTransform:"uppercase",letterSpacing:1,marginBottom:16 }}>Functional Impact Comparison</div>
-            {([
-              ["Speech","speech"],
-              ["Swallowing","swallowing"],
-              ["Mouth Opening","mouth"],
-            ] as [string,keyof Result["fis"]][]).map(([label,key])=>{
-              const bv = beforeRes.fis[key] as number;
-              const av = afterRes.fis[key] as number;
-              return (
-                <div key={key} style={{ marginBottom:14 }}>
-                  <div style={{ display:"flex",justifyContent:"space-between",marginBottom:6 }}>
-                    <span style={{ fontSize:13,fontWeight:600,color:"#0D2137" }}>{label}</span>
-                    <ChangeChip before={bv} after={av} invert={true}/>
-                  </div>
-                  <div style={{ display:"grid",gridTemplateColumns:"1fr 24px 1fr",gap:8,alignItems:"center" }}>
-                    <MiniBar value={bv} color={"#F4845F"}/>
-                    <div style={{ fontSize:10,color:"#8FA3B1",textAlign:"center" }}>→</div>
-                    <MiniBar value={av} color={"#00B4A0"}/>
-                  </div>
-                  <div style={{ display:"flex",justifyContent:"space-between",marginTop:3 }}>
-                    <span style={{ fontSize:10,color:"#8FA3B1" }}>Before: {(bv*100).toFixed(0)}%</span>
-                    <span style={{ fontSize:10,color:"#8FA3B1" }}>After: {(av*100).toFixed(0)}%</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div style={{ background:`linear-gradient(135deg,${improving?"#00B4A0":"#E63946"},${improving?"#007A6E":"#C0392B"})`, borderRadius:22, padding:20, marginBottom:24, color:"#fff" }}>
-            <div style={{ fontSize:11,fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",marginBottom:8,color:"rgba(255,255,255,0.7)" }}>Summary</div>
-            <p style={{ margin:0,fontSize:14,lineHeight:1.7 }}>
-              {improving
-                ? `Progress: your pain score improved from ${beforeRes.ppi.score.toFixed(1)} to ${afterRes.ppi.score.toFixed(1)} — a ${((ppiChange!/beforeRes.ppi.score)*100).toFixed(0)}% reduction. Continue your current plan and attend your follow-up appointment.`
-                : `Pain has increased from ${beforeRes.ppi.score.toFixed(1)} to ${afterRes.ppi.score.toFixed(1)}. Please contact your healthcare provider as soon as possible.`
-              }
-            </p>
-            <button onClick={()=>router.push("/Component1/results/report")}
-              style={{ marginTop:14,background:"rgba(255,255,255,0.2)",border:"1px solid rgba(255,255,255,0.4)",borderRadius:12,padding:"10px 20px",fontSize:13,fontWeight:700,color:"#fff",cursor:"pointer",backdropFilter:"blur(10px)" }}>
-              Download Full Report
-            </button>
-          </div>
+          </GlassCard>
         </>
       )}
 
-      {(beforeRes || afterRes) && (
-        <button onClick={()=>{ setBeforeImg(null);setAfterImg(null);setBeforePrev(null);setAfterPrev(null);setBeforeRes(null);setAfterRes(null); }}
-          style={{ width:"100%",background:"transparent",border:"1.5px solid rgba(13,33,55,0.15)",borderRadius:16,padding:"13px",fontSize:14,fontWeight:700,color:"#4A6278",cursor:"pointer",marginBottom:90 }}>
-          + Try Different Images
-        </button>
+      {!beforePrev && !afterPrev && (
+        <GlassCard style={{ textAlign: "center", padding: "52px 28px" }}>
+          <div style={{ width: 72, height: 72, borderRadius: 20, background: BLUE_TINT, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+            <GitCompare size={30} color={BLUE} strokeWidth={1.4} />
+          </div>
+          <div style={{ fontSize: 18, fontWeight: 400, color: NAVY, marginBottom: 8, fontFamily: SERIF }}>Upload two scans to compare</div>
+          <div style={{ fontSize: 13.5, color: TEXT2, marginBottom: 20, maxWidth: 300, margin: "0 auto 20px", lineHeight: 1.65 }}>Upload photos taken at different dates to see exactly how your condition is changing.</div>
+          <button onClick={() => router.push("/Component1/progress")} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "11px 22px", borderRadius: 999, background: MINT_TINT, border: `1px solid ${MINT}28`, color: MINT, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: FONT }}>
+            <TrendingUp size={14} /> View recovery journey first
+          </button>
+        </GlassCard>
       )}
+    </div>
+  );
+}
 
-      <TabBar active="results"/>
-    </Screen>
+export default function Component1ComparePage() {
+  const [visits, setVisits] = useState<Visit[]>([]);
+  useEffect(() => { setVisits(loadVisits()); }, []);
+  return (
+    <SidebarLayout title="Before & After">
+      <CompareContent visits={visits} />
+    </SidebarLayout>
   );
 }
