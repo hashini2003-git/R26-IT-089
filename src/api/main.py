@@ -45,6 +45,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Initialize MongoDB connection
 init_db()
 
 

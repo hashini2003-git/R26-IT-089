@@ -1,4 +1,4 @@
-# API
+# FastAPI
 fastapi>=0.110
 uvicorn[standard]>=0.27
 python-multipart>=0.0.9
@@ -7,15 +7,18 @@ pydantic>=2.6
 # Authentication
 PyJWT>=2.8
 
-<<<<<<< Updated upstream
-=======
 # MongoDB
 pymongo>=4.6
 motor==3.7.1
 dnspython>=2.4  # Required for MongoDB Atlas DNS seedlist
 certifi>=2023.0  # Required for SSL certificate verification
 
->>>>>>> Stashed changes
+=======
+# MongoDB
+pymongo>=4.6
+dnspython>=2.4  # Required for MongoDB Atlas DNS seedlist
+certifi>=2023.0  # Required for SSL certificate verification
+
 # Utilities
 requests>=2.31
 pyyaml>=6.0
