@@ -20,7 +20,7 @@ import uuid
 from datetime import datetime
 
 import qrcode
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import Response
 from pydantic import BaseModel
 from reportlab.lib import colors
@@ -88,7 +88,7 @@ def _make_qr_image(data: str) -> RLImage:
     return RLImage(buf, width=28 * mm, height=28 * mm)
 
 
-def build_pdf(req: ReportRequest) -> bytes:
+def build_pdf(req: ReportRequest, report_url: str) -> bytes:
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer, pagesize=A4,
@@ -122,10 +122,15 @@ def build_pdf(req: ReportRequest) -> bytes:
         textColor=colors.HexColor("#93ACAF"), alignment=TA_CENTER,
     )
 
+    label_center_style = ParagraphStyle(
+        "LabelCenter", parent=label_style, alignment=TA_CENTER, fontSize=7,
+    )
     elements = []
-    qr_payload = f"IPE-Report|{req.patient_name}|{req.class_name}|{datetime.now().isoformat()}"
     header_table = Table(
-        [[Paragraph("IPE Framework — Clinical Report", title_style), _make_qr_image(qr_payload)]],
+        [
+            [Paragraph("IPE Framework — Clinical Report", title_style), _make_qr_image(report_url)],
+            ["", Paragraph("Scan to view on any device<br/>(valid 1 hour)", label_center_style)],
+        ],
         colWidths=[130 * mm, 30 * mm],
     )
     header_table.setStyle(TableStyle([
@@ -246,7 +251,7 @@ def build_pdf(req: ReportRequest) -> bytes:
 
 
 @router.post("/report/generate")
-async def generate_report(req: ReportRequest):
+async def generate_report(req: ReportRequest, request: Request):
     """Builds the PDF and returns it as base64 directly inside the JSON
     response, alongside a stored id (kept as a fallback route). Embedding
     the bytes in the first response means there's no second application/pdf
@@ -255,8 +260,12 @@ async def generate_report(req: ReportRequest):
     keys off response Content-Type/Content-Disposition/extension, none of
     which apply to a JSON response with a base64 string field."""
     _cleanup_expired()
-    pdf_bytes = build_pdf(req)
     report_id = uuid.uuid4().hex
+    # Built from the incoming request's own host, so this works whether the
+    # API is reached at localhost during dev or a real LAN/public address —
+    # a doctor's phone scanning the QR needs a URL it can actually reach.
+    report_url = str(request.base_url).rstrip("/") + f"/report/{report_id}"
+    pdf_bytes = build_pdf(req, report_url)
     _REPORTS[report_id] = (pdf_bytes, time.time())
     return {
         "report_id": report_id,
