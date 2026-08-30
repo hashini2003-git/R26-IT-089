@@ -1,37 +1,57 @@
 """
 db.py — MongoDB Atlas persistence layer
-Tables: patients, sessions
+Tables: patients
 """
 
 import hashlib
 import os
 from datetime import date, datetime
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
+import os
 from dotenv import load_dotenv
-from pathlib import Path
 
-# Load environment variables from .env file in the project root
-env_path = Path(__file__).resolve().parent.parent.parent / ".env"
-load_dotenv(dotenv_path=env_path)
+# Load environment variables from .env file
+load_dotenv()
 
 # MongoDB Atlas connection
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+MONGODB_URI = os.getenv("MONGODB_URI")
 DATABASE_NAME = os.getenv("DATABASE_NAME", "speech_recovery")
 
 # Initialize MongoDB client
 client = MongoClient(MONGODB_URI)
 db = client[DATABASE_NAME]
 patients_collection = db["patients"]
-sessions_collection = db["sessions"]
 
+# MongoDB Atlas connection
+MONGODB_URI = (os.getenv("MONGODB_URI") or "").strip()
+DATABASE_NAME = os.getenv("DATABASE_NAME", "speech_recovery")
+
+# MongoDB is used when configured. The memory fallback keeps local development
+# available without changing production persistence behavior.
+client = None
+db = None
+patients_collection = None
+_memory_patients: dict[str, Dict[str, Any]] = {}
+
+if MONGODB_URI:
+    try:
+        client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
+        client.admin.command("ping")
+        db = client[DATABASE_NAME]
+        patients_collection = db["patients"]
+        patients_collection.create_index("patient_id", unique=True)
+        patients_collection.create_index("mobile_number", unique=True, sparse=True)
+    except Exception as exc:
+        print(f"MongoDB unavailable; using temporary in-memory authentication: {exc}")
+        client = None
+        db = None
+        patients_collection = None
 # Create indexes for better performance
 patients_collection.create_index("patient_id", unique=True)
 patients_collection.create_index("mobile_number", unique=True, sparse=True)
-sessions_collection.create_index("patient_id")
-sessions_collection.create_index("recorded_at")
-sessions_collection.create_index([("patient_id", 1), ("recorded_at", -1)])
+
 
 
 # ── Password hashing ──────────────────────────────────────────────────────────
@@ -77,7 +97,6 @@ def create_patient(
         "last_name": last_name,
         "mobile_number": mobile_number,
         "password_hash": _hash_password(password),
-        "pin_hash": "",  # Legacy field for backward compatibility
         "therapy_stage": therapy_stage,
         "surgery_date": today,
         "created_at": datetime.utcnow().isoformat(),
@@ -100,15 +119,69 @@ def mobile_exists(mobile_number: str) -> bool:
 def get_patient(patient_id: str) -> Optional[Dict[str, Any]]:
     patient = patients_collection.find_one({"patient_id": patient_id})
     if patient:
-        patient.pop("_id", None)  # Remove MongoDB's _id field
+        # Remove MongoDB's _id field for cleaner output
+        patient.pop("_id", None)
     return patient
 
 
+    
+    patient_doc = {
+        "patient_id": patient_id,
+        "name": fullname,
+        "first_name": first_name,
+        "last_name": last_name,
+        "mobile_number": mobile_number,
+        "password_hash": _hash_password(password),
+        "therapy_stage": therapy_stage,
+        "surgery_date": today,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    
+    if patients_collection is None:
+        if patient_id_exists(patient_id) or mobile_exists(mobile_number):
+            raise Exception("Patient ID or mobile number already exists")
+        _memory_patients[patient_id] = patient_doc
+        return
+    try:
+        patients_collection.insert_one(patient_doc)
+    except DuplicateKeyError:
+        raise Exception("Patient ID or mobile number already exists")
+
+
+def patient_id_exists(patient_id: str) -> bool:
+    if patients_collection is None:
+        return patient_id in _memory_patients
+    return patients_collection.count_documents({"patient_id": patient_id}) > 0
+
+
+def mobile_exists(mobile_number: str) -> bool:
+    if patients_collection is None:
+        return any(patient.get("mobile_number") == mobile_number for patient in _memory_patients.values())
+    return patients_collection.count_documents({"mobile_number": mobile_number}) > 0
+
+
+def get_patient(patient_id: str) -> Optional[Dict[str, Any]]:
+    if patients_collection is None:
+        patient = _memory_patients.get(patient_id)
+        return dict(patient) if patient else None
+    patient = patients_collection.find_one({"patient_id": patient_id})
+    if patient:
+        # Remove MongoDB's _id field for cleaner output
+        patient.pop("_id", None)
+    return patient
+
+
+def get_patient_by_mobile(mobile_number: str) -> Optional[Dict[str, Any]]:
+    if patients_collection is None:
+        patient = next((item for item in _memory_patients.values() if item.get("mobile_number") == mobile_number), None)
+        return dict(patient) if patient else None
 def get_patient_by_mobile(mobile_number: str) -> Optional[Dict[str, Any]]:
     patient = patients_collection.find_one({"mobile_number": mobile_number})
     if patient:
         patient.pop("_id", None)
     return patient
+
+
 
 
 def patient_display_name(patient: Dict[str, Any]) -> str:
@@ -126,92 +199,16 @@ def patient_day_number(created_at: str) -> int:
         return 1
 
 
-# ── Sessions ──────────────────────────────────────────────────────────────────
-
-def save_session(patient_id: str, result: dict, duration_s: float) -> str:
-    patient = get_patient(patient_id)
-    if not patient:
-        raise ValueError(f"Patient {patient_id} not found")
-
-    import uuid
-    session_id = uuid.uuid4().hex[:12]
-    day_number = patient_day_number(patient["created_at"])
-
-    session_doc = {
-        "session_id": session_id,
-        "patient_id": patient_id,
-        "recorded_at": datetime.utcnow().isoformat(),
-        "day_number": day_number,
-        "duration_s": round(duration_s, 3),
-        "vocal_clarity_prob": result["voice_quality_prob"],
-        "fluency_prob": result["stuttering_prob"],
-        "articulation_prob": result["dysarthria_prob"],
-        "severity_score": result["severity_score"],
-        "severity_label": result["severity_label"],
-        "is_healthy": int(result["is_healthy"]),
-        "primary_disorder": result["primary_disorder"],
-        "message": result["message"],
-    }
-    
-    sessions_collection.insert_one(session_doc)
-    return session_id
-
-
-def get_sessions(patient_id: str) -> List[Dict[str, Any]]:
-    sessions = sessions_collection.find(
-        {"patient_id": patient_id}
-    ).sort("recorded_at", -1)
-    
-    result = []
-    for session in sessions:
-        session.pop("_id", None)
-        result.append(session)
-    return result
-
-
-def get_session(session_id: str) -> Optional[Dict[str, Any]]:
-    session = sessions_collection.find_one({"session_id": session_id})
-    if session:
-        session.pop("_id", None)
-    return session
-
-
-def get_progress(patient_id: str) -> List[Dict[str, Any]]:
-    """Daily averages for the trend chart."""
-    pipeline = [
-        {"$match": {"patient_id": patient_id}},
-        {"$group": {
-            "_id": "$day_number",
-            "vocal_clarity": {"$avg": "$vocal_clarity_prob"},
-            "fluency": {"$avg": "$fluency_prob"},
-            "articulation": {"$avg": "$articulation_prob"},
-            "severity": {"$avg": "$severity_score"},
-            "session_count": {"$sum": 1}
-        }},
-        {"$project": {
-            "day_number": "$_id",
-            "vocal_clarity": {"$round": ["$vocal_clarity", 4]},
-            "fluency": {"$round": ["$fluency", 4]},
-            "articulation": {"$round": ["$articulation", 4]},
-            "severity": {"$round": ["$severity", 4]},
-            "session_count": 1,
-            "_id": 0
-        }},
-        {"$sort": {"day_number": 1}}
-    ]
-    
-    result = list(sessions_collection.aggregate(pipeline))
-    return result
-
-
 # ── Database initialization ─────────────────────────────────────────────────
 
 def init_db() -> None:
     """Initialize the database (create collections and indexes)."""
+
+    if patients_collection is None:
+        print("MongoDB not configured; using temporary in-memory authentication")
+        return
     # Create indexes if they don't exist
     patients_collection.create_index("patient_id", unique=True)
     patients_collection.create_index("mobile_number", unique=True, sparse=True)
-    sessions_collection.create_index("patient_id")
-    sessions_collection.create_index("recorded_at")
-    sessions_collection.create_index([("patient_id", 1), ("recorded_at", -1)])
     print("MongoDB Atlas connected and indexes created successfully")
+

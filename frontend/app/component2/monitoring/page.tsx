@@ -1,0 +1,14 @@
+"use client";
+
+import Link from "next/link";
+import { AudioLines } from "lucide-react";
+import { Card, Loading, Notice } from "../ui";
+import { formatDate, usePredictions } from "../hooks";
+import styles from "../risk-voice.module.css";
+
+export default function MonitoringPage() {
+  const { records, loading, error, reload } = usePredictions();
+  const voices = records.filter(record => record.predictionType !== "risk_factors" && typeof record.response.voiceScore === "number").sort((a, b) => +new Date(a.date) - +new Date(b.date));
+  const points = voices.map((record, index) => { const x = voices.length === 1 ? 50 : 5 + (index / (voices.length - 1)) * 90; const score = Number(record.response.voiceScore); return { x, y: 95 - score * .85, score, record }; });
+  return <><div className={styles.pageHead}><div><span className={styles.eyebrow}>LONGITUDINAL RECORDS</span><h2>Weekly Voice Monitoring</h2><p>A chronological view of actual voice results stored for your patient account.</p></div><Link className={`${styles.button} ${styles.primary}`} href="/component2/voice"><AudioLines size={18} />New recording</Link></div>{error && <Notice error>{error} <button onClick={reload}>Retry</button></Notice>}{loading ? <Loading /> : voices.length === 0 ? <Card className={styles.empty}>Complete your first voice recording to begin weekly monitoring.</Card> : <><div className={styles.grid3}><Card className={styles.stat}><small>Recordings</small><strong>{voices.length}</strong></Card><Card className={styles.stat}><small>Latest abnormality probability</small><strong>{points.at(-1)!.score.toFixed(1)}%</strong></Card><Card className={styles.stat}><small>Latest recording</small><b>{formatDate(voices.at(-1)!.date)}</b></Card></div><Card><h3>Voice history chart</h3><p className={styles.muted}>Chronological probabilities only—no clinical improvement or deterioration is inferred.</p><svg className={styles.chart} viewBox="0 0 100 110" preserveAspectRatio="none" aria-label="Voice abnormality probability chart"><line x1="5" y1="10" x2="5" y2="95" stroke="#dbe5ea" /><line x1="5" y1="95" x2="95" y2="95" stroke="#dbe5ea" /><polyline points={points.map(point => `${point.x},${point.y}`).join(" ")} />{points.map((point, index) => <circle key={point.record.id} cx={point.x} cy={point.y} r="1.7"><title>{`Recording ${index + 1}: ${point.score.toFixed(1)}%`}</title></circle>)}</svg></Card><Card style={{ marginTop: 20 }}><h3>Recording timeline</h3><div className={styles.timeline}>{[...voices].reverse().map((record, index) => <div key={record.id}><b>{voices.length - index === 1 ? "Baseline" : `Week ${voices.length - index - 1}`}</b><section><strong>{Number(record.response.voiceScore).toFixed(1)}% voice abnormality probability</strong><small>{formatDate(record.date)}</small></section></div>)}</div></Card></>}</>;
+}

@@ -123,13 +123,11 @@ export default function HomePage() {
   const [patientId, setPatientId] = useState("");
 
   useEffect(() => {
-    if (!isLoggedIn()) {
-      router.push("/login");
-      return;
-    }
-    const p = getPatient();
-    setName(p?.name ?? "Patient");
-    setPatientId(p?.patient_id ?? "");
+    const timer = window.setTimeout(() => {
+      if (!isLoggedIn()) router.push('/login');
+      else setLoading(false);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [router]);
 
   function handleLogout() {
