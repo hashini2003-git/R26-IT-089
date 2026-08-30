@@ -136,7 +136,23 @@ async def predict(file: UploadFile = File(...)):
         )
 
     # ── Model inference ───────────────────────────────────────
-    model  = get_model()
+    try:
+        model = get_model()
+    except FileNotFoundError as exc:
+        logger.error("IPE model checkpoint is unavailable: %s", exc)
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "The oral-lesion model checkpoint is not configured. "
+                "Set IPE_MODEL_PATH or place ipe_best_model_v2.pth in src/api/models."
+            ),
+        ) from exc
+    except Exception as exc:
+        logger.exception("IPE model could not be loaded")
+        raise HTTPException(
+            status_code=500,
+            detail="The oral-lesion model could not be loaded.",
+        ) from exc
     tensor = preprocess(image).unsqueeze(0).to(DEVICE)
 
     with torch.no_grad():

@@ -8,13 +8,19 @@
 import torch
 import torch.nn as nn
 import torchvision.models as models
+import os
 from pathlib import Path
 import logging
 
 logger = logging.getLogger(__name__)
 
 # ── Model path ────────────────────────────────────────────────
-MODEL_PATH = Path(__file__).parent / "models" / "ipe_best_model_v2.pth"
+MODEL_PATH = Path(
+    os.getenv(
+        "IPE_MODEL_PATH",
+        str(Path(__file__).parent / "models" / "ipe_best_model_v2.pth"),
+    )
+).expanduser().resolve()
 
 # ── Device ────────────────────────────────────────────────────
 DEVICE = torch.device("cuda" if torch.cuda.is_available()

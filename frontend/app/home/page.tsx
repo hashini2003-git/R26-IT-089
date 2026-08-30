@@ -125,7 +125,11 @@ export default function HomePage() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       if (!isLoggedIn()) router.push('/login');
-      else setLoading(false);
+      else {
+        const patient = getPatient();
+        setName(patient?.name ?? "Patient");
+        setPatientId(patient?.patient_id ?? "");
+      }
     }, 0);
     return () => window.clearTimeout(timer);
   }, [router]);

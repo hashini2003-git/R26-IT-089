@@ -25,3 +25,8 @@ joblib==1.5.2
 scipy==1.16.1
 imageio-ffmpeg==0.6.0
 
+# Member 1 oral-lesion image inference
+Pillow>=11.0
+torch>=2.7
+torchvision>=0.22
+

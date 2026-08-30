@@ -19,6 +19,14 @@ from src.api.db import (
 )
 from src.risk_voice.main import router as risk_voice_router
 
+try:
+    from src.api.predict import router as predict_router
+except ModuleNotFoundError as exc:
+    predict_router = None
+    _component1_import_error = str(exc)
+else:
+    _component1_import_error = None
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -38,6 +46,8 @@ app.add_middleware(
 )
 
 app.include_router(risk_voice_router, prefix="/risk-voice", tags=["risk-voice"])
+if predict_router is not None:
+    app.include_router(predict_router, tags=["component-1"])
 init_db()
 
 
@@ -95,6 +105,18 @@ def _patient_from_authorization(authorization: str | None) -> dict:
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "version": "3.1.0"}
+
+
+if predict_router is None:
+    @app.post("/predict", tags=["component-1"])
+    def component1_unavailable() -> None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "Component 1 image inference dependencies are unavailable. "
+                f"Backend import error: {_component1_import_error}"
+            ),
+        )
 
 
 @app.post("/auth/register", response_model=RegisterResponse, status_code=201)
