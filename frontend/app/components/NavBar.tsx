@@ -206,6 +206,7 @@ export default function NavBar() {
   // between routes and throws "Expected static flag was missing".
   const hideOnThisRoute =
     pathname?.startsWith("/Component1") ||
+    pathname?.startsWith("/component2") ||
     pathname?.startsWith("/vocal_therapy") ||
     pathname === "/" ||
     pathname === "/login" ||

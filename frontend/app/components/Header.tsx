@@ -98,7 +98,10 @@ export default function Header({ variant = "dark", user, onLogout }: HeaderProps
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-0.5">
             {navLinks.map((link) => {
-              const active = pathname === link.path.split("#")[0];
+              const linkPath = link.path.split("#")[0];
+              const active =
+                pathname === linkPath ||
+                (linkPath !== "/" && pathname?.startsWith(`${linkPath}/`));
               return (
                 <Link
                   key={link.path}
