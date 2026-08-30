@@ -4,10 +4,7 @@ from pydantic import BaseModel, Field, field_validator
 
 
 RiskLevel = Literal["low", "moderate", "high"]
-<<<<<<< Updated upstream
 VoiceLabel = Literal["stable", "slight_variation", "abnormal_marker"]
-=======
->>>>>>> Stashed changes
 
 
 class RiskFactorsRequest(BaseModel):
@@ -46,7 +43,6 @@ class RiskFactorSummary(BaseModel):
     oralPain: str
 
 
-<<<<<<< Updated upstream
 class VoiceAnalysis(BaseModel):
     mfccPattern: str
     pitchVariation: str
@@ -61,7 +57,8 @@ class GenderPitchReference(BaseModel):
     lowerHz: float | None
     upperHz: float | None
     interpretation: str
-=======
+
+
 class StructuredModelInfo(BaseModel):
     modelType: Literal["machine_learning"]
     algorithm: str
@@ -69,7 +66,6 @@ class StructuredModelInfo(BaseModel):
     targetSource: Literal["rule_derived"]
     trainedRows: int
     heldOutMetrics: dict[str, float]
->>>>>>> Stashed changes
 
 
 class PredictionResponse(BaseModel):
@@ -81,7 +77,7 @@ class PredictionResponse(BaseModel):
     insights: list[str]
     recommendations: list[str]
     riskFactorSummary: RiskFactorSummary
-<<<<<<< Updated upstream
+    structuredModel: StructuredModelInfo
     voiceAnalysis: VoiceAnalysis | None
     rawFeatures: dict[str, float] | None = None
     genderPitchReference: GenderPitchReference | None = None
@@ -119,15 +115,3 @@ class PredictionRecord(BaseModel):
     request: dict[str, Any]
     response: dict[str, Any]
     history: HistoryItem | None = None
-=======
-    structuredModel: StructuredModelInfo
-    disclaimer: str
-
-
-class StoredRiskAssessment(BaseModel):
-    id: str
-    patientId: str
-    date: str
-    request: dict[str, Any]
-    response: PredictionResponse
->>>>>>> Stashed changes

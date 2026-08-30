@@ -22,16 +22,10 @@ def level_from_score(score: float) -> str:
 
 
 def calculate_preventive_risk(user_data: dict) -> RiskResult:
-<<<<<<< Updated upstream
-    score = 0.0
-    reasons = []
-    recommendations = []
-=======
-    """Generate explanations for the ML score from the transparent source rules."""
+    """Create transparent explanations for the rule-derived ML target."""
     score = 0.0
     reasons: list[str] = []
     recommendations: list[str] = []
->>>>>>> Stashed changes
 
     age = float(user_data.get("Age", 0) or 0)
     if age >= 60:
@@ -83,12 +77,7 @@ def calculate_preventive_risk(user_data: dict) -> RiskResult:
         "Difficulty Swallowing",
         "White or Red Patches in Mouth",
     ]
-<<<<<<< Updated upstream
-    symptom_count = sum(yes(user_data.get(field)) for field in symptom_fields)
-    if symptom_count >= 2:
-=======
     if sum(yes(user_data.get(field)) for field in symptom_fields) >= 2:
->>>>>>> Stashed changes
         score += 10
         reasons.append("Multiple oral warning symptoms are present.")
         recommendations.append("Seek professional oral examination as soon as possible.")

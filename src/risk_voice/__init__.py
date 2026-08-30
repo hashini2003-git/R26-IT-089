@@ -1,5 +1,1 @@
-<<<<<<< Updated upstream
-
-=======
-"""Risk-factor and voice-monitoring component."""
->>>>>>> Stashed changes
+"""Member 2 risk-factor and voice-monitoring component."""

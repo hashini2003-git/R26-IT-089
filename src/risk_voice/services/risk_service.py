@@ -1,22 +1,3 @@
-<<<<<<< Updated upstream
-import importlib.util
-from functools import lru_cache
-from typing import Any
-
-from fastapi import HTTPException, status
-
-from src.risk_voice.core.config import settings
-from src.risk_voice.schemas.prediction import PredictionResponse, RiskFactorsRequest, RiskFactorSummary
-from src.risk_voice.services import preventive_risk_engine
-from src.risk_voice.utils.paths import PREVENTIVE_ENGINE_PATH
-
-
-YES_VALUES = {"yes", "y", "true", "1", "current", "daily", "frequent", "regular", "occasional", "mild", "moderate", "severe", "poor"}
-NO_VALUES = {"no", "n", "false", "0", "never", "none", "normal", "good", "low-risk"}
-
-ALLOWED_VALUES = {
-    "gender": {"male", "female", "other", "prefer not to say"},
-=======
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -25,6 +6,7 @@ import joblib
 import pandas as pd
 from fastapi import HTTPException, status
 
+from src.risk_voice.core.config import settings
 from src.risk_voice.schemas.prediction import (
     PredictionResponse,
     RiskFactorSummary,
@@ -35,7 +17,6 @@ from src.risk_voice.services.preventive_risk_engine import calculate_preventive_
 
 
 MODEL_PATH = Path(__file__).resolve().parents[1] / "models" / "risk_factor_score_model.joblib"
-DISCLAIMER = "This is AI-assisted screening support and not a medical diagnosis."
 
 YES_VALUES = {
     "yes", "y", "true", "1", "current", "daily", "frequent", "regular",
@@ -45,7 +26,6 @@ NO_VALUES = {"no", "n", "false", "0", "never", "none", "normal", "good", "low-ri
 
 ALLOWED_VALUES = {
     "gender": {"male", "female", "other", "prefer not to say", "prefer_not_to_say"},
->>>>>>> Stashed changes
     "smoking": YES_VALUES | NO_VALUES | {"former"},
     "alcohol": YES_VALUES | NO_VALUES | {"rare", "social"},
     "betelChewing": YES_VALUES | NO_VALUES | {"former"},
@@ -63,46 +43,25 @@ ALLOWED_VALUES = {
 }
 
 
-<<<<<<< Updated upstream
-def _clean(value: str) -> str:
-    return str(value).strip()
-
-
-def _key(value: str) -> str:
-    return _clean(value).lower()
-=======
 def _key(value: str) -> str:
     return str(value).strip().lower()
->>>>>>> Stashed changes
 
 
 def _validate_categories(payload: RiskFactorsRequest) -> None:
     errors: list[str] = []
     for field_name, allowed in ALLOWED_VALUES.items():
-        value = _key(getattr(payload, field_name))
-        if value not in allowed:
+        if _key(getattr(payload, field_name)) not in allowed:
             errors.append(f"{field_name} has unsupported value '{getattr(payload, field_name)}'")
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"errors": errors})
 
 
-<<<<<<< Updated upstream
-def _truthy_for_engine(value: str) -> str:
-    value_key = _key(value)
-    if value_key in YES_VALUES or value_key == "former":
-        return "Yes"
-    return "No"
-
-
-def _diet_for_engine(value: str) -> str:
-=======
 def _binary(value: str) -> str:
     value_key = _key(value)
     return "Yes" if value_key in YES_VALUES or value_key == "former" else "No"
 
 
 def _diet(value: str) -> str:
->>>>>>> Stashed changes
     value_key = _key(value)
     if value_key in {"low", "poor"}:
         return "Low"
@@ -111,46 +70,6 @@ def _diet(value: str) -> str:
     return "Medium"
 
 
-<<<<<<< Updated upstream
-def _hygiene_signal(gum_disease: str, poor_oral_hygiene: str) -> str:
-    return "Yes" if _truthy_for_engine(gum_disease) == "Yes" or _truthy_for_engine(poor_oral_hygiene) == "Yes" else "No"
-
-
-@lru_cache(maxsize=1)
-def _load_preventive_engine() -> Any:
-    if not PREVENTIVE_ENGINE_PATH.exists():
-        return preventive_risk_engine
-    spec = importlib.util.spec_from_file_location("preventive_risk_engine", PREVENTIVE_ENGINE_PATH)
-    if spec is None or spec.loader is None:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Preventive risk engine cannot be loaded.")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    if not hasattr(module, "calculate_preventive_risk"):
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Preventive risk function is unavailable.")
-    return module
-
-
-def map_to_engine_fields(payload: RiskFactorsRequest) -> dict[str, Any]:
-    return {
-        "Age": payload.age,
-        "Gender": payload.gender,
-        "Tobacco Use": _truthy_for_engine(payload.smoking),
-        "Alcohol Consumption": _truthy_for_engine(payload.alcohol),
-        "Betel Quid Use": _truthy_for_engine(payload.betelChewing),
-        "Oral Lesions": _truthy_for_engine(payload.oralUlcer),
-        "Poor Oral Hygiene": _hygiene_signal(payload.gumDisease, payload.poorOralHygiene),
-        "HPV Infection": _truthy_for_engine(payload.hpvInfection),
-        "Diet (Fruits & Vegetables Intake)": _diet_for_engine(payload.diet),
-        "Family History of Cancer": _truthy_for_engine(payload.familyHistory),
-        "Compromised Immune System": _truthy_for_engine(payload.compromisedImmuneSystem),
-        "Unexplained Bleeding": _truthy_for_engine(payload.unexplainedBleeding),
-        "Difficulty Swallowing": _truthy_for_engine(payload.difficultySwallowing),
-        "White or Red Patches in Mouth": _truthy_for_engine(payload.whiteOrRedPatches),
-    }
-
-
-def level_from_score(score: float) -> str:
-=======
 def _model_fields(payload: RiskFactorsRequest) -> dict[str, Any]:
     return {
         "Age": payload.age,
@@ -196,8 +115,7 @@ def _predict_score(artifact: dict[str, Any], fields: dict[str, Any]) -> float:
     return round(max(0.0, min(100.0, score)), 2)
 
 
-def _level(score: float) -> str:
->>>>>>> Stashed changes
+def level_from_score(score: float) -> str:
     if score < 35:
         return "low"
     if score < 65:
@@ -205,51 +123,43 @@ def _level(score: float) -> str:
     return "high"
 
 
-<<<<<<< Updated upstream
-def risk_summary(payload: RiskFactorsRequest) -> RiskFactorSummary:
-    return RiskFactorSummary(
-        age=payload.age,
-        smoking=payload.smoking,
-        alcohol=payload.alcohol,
-        betelChewing=payload.betelChewing,
-        oralUlcer=payload.oralUlcer,
-        gumDisease=payload.gumDisease,
-        oralPain=payload.oralPain,
-    )
-
-
-def _symptom_count(payload: RiskFactorsRequest) -> int:
-    symptom_values = [
-        payload.oralUlcer,
-        payload.oralPain,
-        payload.unexplainedBleeding,
-        payload.difficultySwallowing,
-        payload.whiteOrRedPatches,
-    ]
-    return sum(_truthy_for_engine(value) == "Yes" for value in symptom_values)
-
-
 def build_structured_prediction(payload: RiskFactorsRequest) -> PredictionResponse:
     _validate_categories(payload)
-    engine = _load_preventive_engine()
-    result = engine.calculate_preventive_risk(map_to_engine_fields(payload))
-    structured_score = float(result.score)
-    insights = list(result.reasons)
+    artifact = load_model()
+    fields = _model_fields(payload)
+    explanation = calculate_preventive_risk(fields)
+    score = _predict_score(artifact, fields)
+    insights = list(explanation.reasons)
 
-    if _truthy_for_engine(payload.oralPain) == "Yes":
+    if _binary(payload.oralPain) == "Yes":
         insights.append("Oral pain was reported and should be monitored if persistent.")
-    if _symptom_count(payload) < 2:
-        insights.append("No severe symptom cluster detected from submitted risk factors.")
 
+    metadata = artifact["metadata"]
     return PredictionResponse(
-        riskPercentage=round(structured_score, 2),
-        level=level_from_score(structured_score),
-        structuredScore=round(structured_score, 2),
+        riskPercentage=score,
+        level=level_from_score(score),
+        structuredScore=score,
         voiceScore=None,
-        finalScore=round(structured_score, 2),
+        finalScore=score,
         insights=list(dict.fromkeys(insights)),
-        recommendations=list(result.recommendations),
-        riskFactorSummary=risk_summary(payload),
+        recommendations=list(explanation.recommendations),
+        riskFactorSummary=RiskFactorSummary(
+            age=payload.age,
+            smoking=payload.smoking,
+            alcohol=payload.alcohol,
+            betelChewing=payload.betelChewing,
+            oralUlcer=payload.oralUlcer,
+            gumDisease=payload.gumDisease,
+            oralPain=payload.oralPain,
+        ),
+        structuredModel=StructuredModelInfo(
+            modelType="machine_learning",
+            algorithm=str(metadata["algorithm"]),
+            target=str(metadata["target"]),
+            targetSource="rule_derived",
+            trainedRows=int(metadata["trained_rows"]),
+            heldOutMetrics={key: float(value) for key, value in metadata["held_out_metrics"].items()},
+        ),
         voiceAnalysis=None,
         disclaimer=settings.disclaimer,
     )
@@ -292,44 +202,4 @@ def combine_predictions(
             "rawFeatures": raw_features,
             "genderPitchReference": gender_pitch_reference,
         }
-=======
-def predict_risk(payload: RiskFactorsRequest) -> PredictionResponse:
-    _validate_categories(payload)
-    artifact = load_model()
-    fields = _model_fields(payload)
-    explanation = calculate_preventive_risk(fields)
-    score = _predict_score(artifact, fields)
-    insights = list(explanation.reasons)
-
-    if _binary(payload.oralPain) == "Yes":
-        insights.append("Oral pain was reported and should be monitored if persistent.")
-
-    metadata = artifact["metadata"]
-    return PredictionResponse(
-        riskPercentage=score,
-        level=_level(score),
-        structuredScore=score,
-        voiceScore=None,
-        finalScore=score,
-        insights=list(dict.fromkeys(insights)),
-        recommendations=list(explanation.recommendations),
-        riskFactorSummary=RiskFactorSummary(
-            age=payload.age,
-            smoking=payload.smoking,
-            alcohol=payload.alcohol,
-            betelChewing=payload.betelChewing,
-            oralUlcer=payload.oralUlcer,
-            gumDisease=payload.gumDisease,
-            oralPain=payload.oralPain,
-        ),
-        structuredModel=StructuredModelInfo(
-            modelType="machine_learning",
-            algorithm=str(metadata["algorithm"]),
-            target=str(metadata["target"]),
-            targetSource="rule_derived",
-            trainedRows=int(metadata["trained_rows"]),
-            heldOutMetrics={key: float(value) for key, value in metadata["held_out_metrics"].items()},
-        ),
-        disclaimer=DISCLAIMER,
->>>>>>> Stashed changes
     )
