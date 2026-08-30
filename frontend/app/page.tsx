@@ -129,7 +129,7 @@ function HeroOrbs() {
       <div className="absolute rounded-full" style={{ width: 500, height: 500, bottom: "-120px", left: "-100px", background: "radial-gradient(ellipse at center, rgba(13,148,136,0.16) 0%, transparent 70%)", filter: "blur(50px)", animation: "oc-orb-drift-2 22s ease-in-out infinite" }} />
       <div className="absolute rounded-full" style={{ width: 320, height: 320, top: "30%", left: "35%", background: "radial-gradient(ellipse at center, rgba(21,101,192,0.09) 0%, transparent 70%)", filter: "blur(30px)", animation: "oc-orb-drift-1 14s ease-in-out infinite reverse" }} />
       <div className="absolute inset-0" style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)", backgroundSize: "36px 36px" }} />
-      <div className="absolute left-0 right-0 h-[1px] opacity-[0.04]" style={{ background: "linear-gradient(90deg, transparent, #14B8A6, transparent)", animation: "oc-scan-line 8s linear infinite" }} />
+      <div className="absolute left-0 right-0 h-px opacity-[0.04]" style={{ background: "linear-gradient(90deg, transparent, #14B8A6, transparent)", animation: "oc-scan-line 8s linear infinite" }} />
     </div>
   );
 }
@@ -213,12 +213,12 @@ export default function WelcomePage() {
 
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-30">
           <span className="text-white text-[10px] oc-font-mono tracking-widest">SCROLL</span>
-          <div className="w-px h-10 bg-gradient-to-b from-white/40 to-transparent oc-animate-float" />
+          <div className="w-px h-10 bg-linear-to-b from-white/40 to-transparent oc-animate-float" />
         </div>
       </section>
 
       {/* ── STATS ── */}
-      <section ref={statsRef} id="about" className="py-16 relative overflow-hidden scroll-mt-[76px]" style={{ background: "linear-gradient(135deg, #0B1F38 0%, #0D2B4E 100%)" }}>
+      <section ref={statsRef} id="about" className="py-16 relative overflow-hidden scroll-mt-19" style={{ background: "linear-gradient(135deg, #0B1F38 0%, #0D2B4E 100%)" }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((s, i) => (
@@ -235,7 +235,7 @@ export default function WelcomePage() {
       </section>
 
       {/* ── MODULES ── */}
-      <section ref={modulesRef} id="modules" className="py-24 scroll-mt-[76px]" style={{ background: "#F4F8FD" }}>
+      <section ref={modulesRef} id="modules" className="py-24 scroll-mt-19" style={{ background: "#F4F8FD" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="oc-reveal text-center mb-16">
             <div className="oc-chip-mint mx-auto mb-4">AI Modules</div>
@@ -279,7 +279,7 @@ export default function WelcomePage() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section ref={howRef} id="how" className="py-24 relative overflow-hidden scroll-mt-[76px]" style={{ background: "linear-gradient(160deg, #091929 0%, #0B1F38 60%, #0D2B4E 100%)" }}>
+      <section ref={howRef} id="how" className="py-24 relative overflow-hidden scroll-mt-19" style={{ background: "linear-gradient(160deg, #091929 0%, #0B1F38 60%, #0D2B4E 100%)" }}>
         <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="oc-reveal text-center mb-16">
@@ -459,7 +459,7 @@ export default function WelcomePage() {
       {/* ── CTA ── */}
       <section ref={ctaRef} className="py-20 relative overflow-hidden" style={{ background: "linear-gradient(135deg, #091929 0%, #0B1F38 50%, #0D47A1 100%)" }}>
         <div className="absolute inset-0 pointer-events-none opacity-30" style={{ backgroundImage: "radial-gradient(circle, rgba(13,148,136,0.15) 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: "radial-gradient(ellipse, rgba(13,148,136,0.15) 0%, transparent 65%)", filter: "blur(60px)" }} />
+        <div className="absolute top-0 right-0 w-125 h-125 rounded-full pointer-events-none" style={{ background: "radial-gradient(ellipse, rgba(13,148,136,0.15) 0%, transparent 65%)", filter: "blur(60px)" }} />
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="oc-reveal oc-chip-mint mx-auto mb-6">Begin Your Assessment</div>

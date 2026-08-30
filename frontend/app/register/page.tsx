@@ -211,7 +211,7 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <div className="w-full max-w-[420px]">
+        <div className="w-full max-w-105">
           <div className="mb-7">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] oc-font-mono mb-4" style={{ background: "#E3EEF9", border: "1px solid rgba(21,101,192,0.18)", color: "#1565C0" }}>
               Step {step} of 2
