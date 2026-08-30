@@ -18,6 +18,7 @@ from src.api.db import (
     verify_password,
 )
 from src.risk_voice.main import router as risk_voice_router
+from src.api.vocal_therapy import router as vocal_therapy_router
 
 try:
     from src.api.predict import router as predict_router
@@ -46,6 +47,7 @@ app.add_middleware(
 )
 
 app.include_router(risk_voice_router, prefix="/risk-voice", tags=["risk-voice"])
+app.include_router(vocal_therapy_router, tags=["vocal-therapy"])
 if predict_router is not None:
     app.include_router(predict_router, tags=["component-1"])
 init_db()

@@ -39,6 +39,50 @@ export type RegisterResponse = {
   therapy_stage: string;
 };
 
+// Speech and vocal-therapy sessions
+export type Session = {
+  session_id:         string;
+  patient_id:         string;
+  recorded_at:        string;
+  day_number:         number;
+  duration_s:         number;
+  vocal_clarity_prob: number;
+  fluency_prob:       number;
+  articulation_prob:  number;
+  severity_score:     number;
+  severity_label:     string;
+  is_healthy:         boolean;
+  primary_disorder:   string;
+  message:            string;
+};
+
+export type ModelScore = {
+  model:     string;
+  sentiment: string;
+  positive:  number;
+  neutral:   number;
+  negative:  number;
+};
+
+export type SentimentResult = {
+  sentiment:  "positive" | "neutral" | "negative";
+  positive:   number;
+  neutral:    number;
+  negative:   number;
+  message:    string;
+  model_used: string;
+  all_models: ModelScore[];
+};
+
+export type ProgressPoint = {
+  day_number:    number;
+  vocal_clarity: number;
+  fluency:       number;
+  articulation:  number;
+  severity:      number;
+  session_count: number;
+};
+
 // ── Component 2: multimodal risk and voice monitoring ──
 export type RiskLevel = "low" | "moderate" | "high";
 

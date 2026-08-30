@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { generateGeminiText } from '../../lib/gemini';
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY!,
-});
+type VocalChatContext = {
+  sessionCount?: number;
+  latestScore?: number;
+  trend?: string;
+};
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, context } = await request.json();
+    const { message, context } = (await request.json()) as {
+      message: string;
+      context?: VocalChatContext;
+    };
 
     if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json({
@@ -30,10 +35,10 @@ Provide a warm, helpful response about speech recovery.
 Keep it concise (2-4 sentences).
 `;
 
-    const result = await ai.models.generateContent({
+    const result = { text: await generateGeminiText({
       model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
+      prompt,
+    }) };
 
     return NextResponse.json({
       reply:
@@ -44,7 +49,10 @@ Keep it concise (2-4 sentences).
     console.error('Gemini Error:', error);
 
     try {
-      const { message, context } = await request.json();
+      const { message, context } = (await request.json()) as {
+        message: string;
+        context?: VocalChatContext;
+      };
 
       return NextResponse.json({
         reply: getFallbackResponse(message, context),
@@ -58,9 +66,9 @@ Keep it concise (2-4 sentences).
   }
 }
 
-function getFallbackResponse(message: string, context: any): string {
+function getFallbackResponse(message: string, context?: VocalChatContext): string {
   const msg = message.toLowerCase();
-  const score = context?.latestScore;
+  const score = context?.latestScore ?? 0;
   const sessions = context?.sessionCount || 0;
 
   if (

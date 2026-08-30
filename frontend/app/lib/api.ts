@@ -1,6 +1,18 @@
-import type { LoginResponse, Patient, PredictionRecord, RegisterResponse, RiskFactors, RiskResult, VoiceResult } from "./types";
+import type {
+  AnalysisResult,
+  LoginResponse,
+  Patient,
+  PredictionRecord,
+  ProgressPoint,
+  RegisterResponse,
+  RiskFactors,
+  RiskResult,
+  SentimentResult,
+  Session,
+  VoiceResult,
+} from "./types";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
 
 function authHeaders(): Record<string, string> {
   if (typeof window === "undefined") return {};
@@ -56,6 +68,40 @@ export async function login(mobileNumber: string, password: string): Promise<Log
 export async function fetchMe(): Promise<Patient> {
   const res = await fetch(`${BASE}/me`, { headers: authHeaders() });
   return handleResponse<Patient>(res);
+}
+
+// Component 4: speech and vocal-therapy APIs
+export async function analyzeVoice(file: File): Promise<AnalysisResult> {
+  const body = new FormData();
+  body.append("file", file);
+  const res = await fetch(`${BASE}/analyze`, {
+    method: "POST",
+    headers: authHeaders(),
+    body,
+  });
+  return handleResponse<AnalysisResult>(res);
+}
+
+export async function fetchSessions(): Promise<Session[]> {
+  const res = await fetch(`${BASE}/sessions`, { headers: authHeaders() });
+  return handleResponse<Session[]>(res);
+}
+
+export async function fetchProgress(): Promise<ProgressPoint[]> {
+  const res = await fetch(`${BASE}/progress`, { headers: authHeaders() });
+  return handleResponse<ProgressPoint[]>(res);
+}
+
+export async function analyzeSentiment(
+  text: string,
+  model = "ensemble",
+): Promise<SentimentResult> {
+  const res = await fetch(`${BASE}/sentiment`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, model }),
+  });
+  return handleResponse<SentimentResult>(res);
 }
 
 // ── Component 2: authenticated risk and voice APIs ──

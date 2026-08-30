@@ -24,7 +24,7 @@ const FONT = "'Inter', system-ui, sans-serif";
 const SERIF = "'DM Serif Display', Georgia, serif";
 const MONO = "'DM Mono', monospace";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
 
 const LOAD_STEPS = [
   { icon: Eye, label: "Detecting tissue regions…" },

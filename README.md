@@ -173,7 +173,33 @@ not be presented as clinical oral-cancer diagnostic accuracy. The rule engine is
 used at runtime only for readable insights and recommendations; the returned
 structured score comes from the trained model.
 
-Each component has its own scripts or notebooks inside its folder. Refer to the component-level README for detailed setup.
+### Run the integrated web application
+
+From the repository root, install and start the FastAPI backend on port 8001:
+
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn src.api.main:app --host 127.0.0.1 --port 8001
+```
+
+In a second terminal, start the Next.js frontend:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000`. The API documentation is available at
+`http://localhost:8001/docs`. The frontend reads `NEXT_PUBLIC_API_URL` from
+`frontend/.env.local`; its fallback URL also uses port 8001.
+
+Component 1 image inference additionally requires the excluded checkpoint
+`src/api/models/ipe_best_model_v2.pth`, or an `IPE_MODEL_PATH` environment
+variable pointing to that checkpoint.
+
+Each component also has scripts or notebooks inside its folder. Refer to the component-level README for detailed setup.
 
 General steps:
 1. Install dependencies (Python 3.8+):

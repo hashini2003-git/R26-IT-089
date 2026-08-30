@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
-
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY!,
-});
+import { generateGeminiText } from '../../../lib/gemini';
 
 type OralChatContext = {
   classification?: string;
@@ -63,11 +59,11 @@ Always encourage seeing a real clinician for diagnosis or treatment decisions â€
 Keep it concise (2-4 sentences). Do not use markdown headers, only ** for emphasis on key terms.
 `;
 
-    const result = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: prompt,
-      ...(useSearch ? { config: { tools: [{ googleSearch: {} }] } } : {}),
-    });
+    const result = { text: await generateGeminiText({
+      model: 'gemini-3.7-flash',
+      prompt,
+      googleSearch: useSearch,
+    }) };
 
     return NextResponse.json({
       reply: result.text || "I'm here to help you understand your results. Could you rephrase that?",

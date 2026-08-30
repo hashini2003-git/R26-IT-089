@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
-
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY!,
-});
+import { generateGeminiText } from '../../../lib/gemini';
 
 type Doctor = {
   name: string;
@@ -128,13 +124,11 @@ Only include phone and website if you are confident they are accurate from searc
 If you cannot find real results, return an empty array: []
 `;
 
-    const result = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: prompt,
-      config: {
-        tools: [{ googleSearch: {} }],
-      },
-    });
+    const result = { text: await generateGeminiText({
+      model: 'gemini-3.7-flash',
+      prompt,
+      googleSearch: true,
+    }) };
 
     const raw = (result.text || '[]').trim();
     const cleaned = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '');
