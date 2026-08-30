@@ -48,7 +48,6 @@ if MONGODB_URI:
         client = None
         db = None
         patients_collection = None
-=======
 # Create indexes for better performance
 patients_collection.create_index("patient_id", unique=True)
 patients_collection.create_index("mobile_number", unique=True, sparse=True)
@@ -71,6 +70,11 @@ def verify_password(password: str, password_hash: str) -> bool:
         return key.hex() == key_hex
     except Exception:
         return False
+
+
+# Backward-compat alias (old PIN-based patients)
+def verify_pin(pin: str, pin_hash: str) -> bool:
+    return verify_password(pin, pin_hash)
 
 
 # ── Patients ──────────────────────────────────────────────────────────────────

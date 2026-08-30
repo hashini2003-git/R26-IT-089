@@ -1,3 +1,18 @@
+// ── Analysis ──────────────────────────────────────────────────────────────────
+export type AnalysisResult = {
+  is_healthy:         boolean;
+  primary_disorder:   string;   // "healthy" | "parkinsons" | "stuttering" | "dysarthria"
+  severity_score:     number;   // 0.0 – 3.0
+  severity_label:     string;   // "none" | "mild" | "moderate" | "severe"
+  severity_color:     string;
+  voice_quality_prob: number;
+  stuttering_prob:    number;
+  dysarthria_prob:    number;
+  duration_s:         number;
+  message:            string;
+  session_id?:        string;   // present when session auto-saved (logged in)
+};
+
 // ── Auth / Patient ────────────────────────────────────────────────────────────
 export type Patient = {
   patient_id:    string;

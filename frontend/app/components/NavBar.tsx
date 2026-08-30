@@ -196,8 +196,25 @@ export default function NavBar() {
     { href: "/component1", label: "Component 1" },
     { href: "/component2", label: "Risk & Voice" },
     { href: "/component3", label: "Component 3" },
-    { href: "/component4", label: "Component 4" },
+    { href: "/vocal_therapy/guide", label: "Vocal Therapy" },
   ];
+
+  // Welcome, Login, Register, Home and Vocal Therapy now render their own
+  // Header/Footer (from the OralCare AI design), so the old NavBar must not
+  // double up there. All hooks above must still run on every render — only
+  // the JSX output is skipped — otherwise React's hook count mismatches
+  // between routes and throws "Expected static flag was missing".
+  const hideOnThisRoute =
+    pathname?.startsWith("/Component1") ||
+    pathname?.startsWith("/vocal_therapy") ||
+    pathname === "/" ||
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/home";
+
+  if (hideOnThisRoute) {
+    return null;
+  }
 
   return (
     <>
