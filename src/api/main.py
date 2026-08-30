@@ -15,9 +15,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from src.api.auth import create_token
+<<<<<<< Updated upstream
 from src.risk_voice.main import app as risk_voice_app
 from src.risk_voice.services.database_service import close_database as close_risk_voice_database
 from src.risk_voice.services.database_service import connect_database as connect_risk_voice_database
+=======
+from src.risk_voice.main import router as risk_voice_router
+>>>>>>> Stashed changes
 from src.api.db import (
     create_patient,
     get_patient_by_mobile,
@@ -44,6 +48,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(risk_voice_router, prefix="/risk-voice", tags=["risk-voice"])
 
 # Initialize MongoDB connection
 init_db()
@@ -161,7 +167,10 @@ def login(body: LoginRequest):
         surgery_date = patient["surgery_date"],
         day_number   = patient_day_number(patient["created_at"]),
     )
+<<<<<<< Updated upstream
 
 
 # Member 2: authenticated multimodal risk assessment and voice monitoring.
 app.mount("/risk-voice", risk_voice_app)
+=======
+>>>>>>> Stashed changes

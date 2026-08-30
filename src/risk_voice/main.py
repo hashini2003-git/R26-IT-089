@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import json
 from contextlib import asynccontextmanager
 from typing import Any
@@ -214,3 +215,58 @@ async def history(request: Request, limit: int = Query(default=50, ge=1, le=200)
 @app.get("/api/predictions", response_model=list[PredictionRecord])
 async def predictions(request: Request, limit: int = Query(default=50, ge=1, le=200)) -> list[PredictionRecord]:
     return await get_prediction_records(patient_id=request.state.patient_id, limit=limit)
+=======
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+
+from src.api.auth import decode_token
+from src.risk_voice.schemas.prediction import PredictionResponse, RiskFactorsRequest, StoredRiskAssessment
+from src.risk_voice.services.database_service import get_risk_assessments, save_risk_assessment
+from src.risk_voice.services.risk_service import model_metadata, predict_risk
+
+
+router = APIRouter()
+
+
+def authenticated_patient(authorization: str | None = Header(default=None)) -> str:
+    if not authorization:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authorization token is required.")
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="A valid Bearer token is required.")
+    patient_id = decode_token(token)
+    if not patient_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is invalid or expired.")
+    return patient_id
+
+
+@router.get("/health")
+def health() -> dict:
+    metadata = model_metadata()
+    return {
+        "status": "ok",
+        "component": "risk-voice",
+        "riskModel": {
+            "algorithm": metadata["algorithm"],
+            "target": metadata["target"],
+            "targetSource": metadata["target_source"],
+        },
+    }
+
+
+@router.post("/api/predict/risk-factors", response_model=PredictionResponse)
+def predict_risk_factors(
+    payload: RiskFactorsRequest,
+    patient_id: str = Depends(authenticated_patient),
+) -> PredictionResponse:
+    response = predict_risk(payload)
+    save_risk_assessment(patient_id, payload, response)
+    return response
+
+
+@router.get("/api/risk-assessments", response_model=list[StoredRiskAssessment])
+def risk_assessments(
+    limit: int = Query(default=50, ge=1, le=200),
+    patient_id: str = Depends(authenticated_patient),
+) -> list[StoredRiskAssessment]:
+    return [StoredRiskAssessment.model_validate(item) for item in get_risk_assessments(patient_id, limit)]
+>>>>>>> Stashed changes

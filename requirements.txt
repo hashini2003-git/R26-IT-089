@@ -24,6 +24,7 @@ requests>=2.31
 pyyaml>=6.0
 python-dotenv>=1.0
 
+<<<<<<< Updated upstream
 # Member 2: structured risk and voice analysis
 pandas==2.3.2
 numpy==2.3.2
@@ -31,3 +32,10 @@ scipy==1.16.1
 scikit-learn==1.7.1
 joblib==1.5.2
 imageio-ffmpeg==0.6.0
+=======
+# Member 2 risk-factor machine-learning model (artifact compatibility)
+numpy==2.3.2
+pandas==2.3.2
+scikit-learn==1.7.1
+joblib==1.5.2
+>>>>>>> Stashed changes

@@ -158,6 +158,21 @@ All merges are recorded in **two places**:
 
 ## 6) How to Run (High-Level)
 
+### Member 2 trained risk-factor model
+
+The authenticated structured-risk endpoint is:
+
+```text
+POST /risk-voice/api/predict/risk-factors
+```
+
+The bundled model is a `HistGradientBoostingRegressor` trained on 84,922
+structured records to reproduce rule-derived preventive scores. Its reported
+98.90% risk-level accuracy measures agreement with those source rules and must
+not be presented as clinical oral-cancer diagnostic accuracy. The rule engine is
+used at runtime only for readable insights and recommendations; the returned
+structured score comes from the trained model.
+
 Each component has its own scripts or notebooks inside its folder. Refer to the component-level README for detailed setup.
 
 General steps:

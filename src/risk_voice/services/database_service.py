@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from typing import Any
+<<<<<<< Updated upstream
 from uuid import uuid4
 
 from pymongo import DESCENDING
@@ -123,3 +124,45 @@ async def get_prediction_records(patient_id: str, limit: int = 50) -> list[Predi
 async def get_history(patient_id: str, limit: int = 50) -> list[HistoryItem]:
     records = await get_prediction_records(patient_id=patient_id, limit=limit)
     return [record.history for record in records if record.history is not None]
+=======
+
+from src.api.db import db
+from src.risk_voice.schemas.prediction import PredictionResponse, RiskFactorsRequest
+
+
+collection = db["risk_assessments"]
+collection.create_index([("patient_id", 1), ("created_at", -1)])
+
+
+def save_risk_assessment(
+    patient_id: str,
+    request: RiskFactorsRequest,
+    response: PredictionResponse,
+) -> str:
+    document = {
+        "patient_id": patient_id,
+        "created_at": datetime.now(timezone.utc),
+        "request": request.model_dump(mode="json"),
+        "response": response.model_dump(mode="json"),
+    }
+    return str(collection.insert_one(document).inserted_id)
+
+
+def get_risk_assessments(patient_id: str, limit: int) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    cursor = collection.find({"patient_id": patient_id}).sort("created_at", -1).limit(limit)
+    for document in cursor:
+        created_at = document["created_at"]
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+        records.append(
+            {
+                "id": str(document["_id"]),
+                "patientId": patient_id,
+                "date": created_at.astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),
+                "request": document["request"],
+                "response": document["response"],
+            }
+        )
+    return records
+>>>>>>> Stashed changes
