@@ -1,4 +1,4 @@
-import type { LoginResponse, Patient, RegisterResponse } from "./types";
+import type { AnalysisResult, LoginResponse, Patient, ProgressPoint, RegisterResponse, SentimentResult, Session } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -51,4 +51,50 @@ export async function login(mobileNumber: string, password: string): Promise<Log
 export async function fetchMe(): Promise<Patient> {
   const res = await fetch(`${BASE}/me`, { headers: authHeaders() });
   return handleResponse<Patient>(res);
+}
+
+// ── Analysis ──────────────────────────────────────────────────────────────────
+
+export async function analyzeVoice(file: File): Promise<AnalysisResult> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${BASE}/analyze`, {
+    method:  "POST",
+    headers: authHeaders(),   // Bearer token → auto-saves session if logged in
+    body:    form,
+  });
+  return handleResponse<AnalysisResult>(res);
+}
+
+export async function fetchHealth(): Promise<{ status: string; models: string[]; version: string }> {
+  const res = await fetch(`${BASE}/health`);
+  return handleResponse(res);
+}
+
+// ── Sessions ──────────────────────────────────────────────────────────────────
+
+export async function fetchSessions(): Promise<Session[]> {
+  const res = await fetch(`${BASE}/sessions`, { headers: authHeaders() });
+  return handleResponse<Session[]>(res);
+}
+
+// ── Progress ──────────────────────────────────────────────────────────────────
+
+export async function fetchProgress(): Promise<ProgressPoint[]> {
+  const res = await fetch(`${BASE}/progress`, { headers: authHeaders() });
+  return handleResponse<ProgressPoint[]>(res);
+}
+
+// ── Sentiment ─────────────────────────────────────────────────────────────────
+
+export async function analyzeSentiment(
+  text: string,
+  model: string = "ensemble",
+): Promise<SentimentResult> {
+  const res = await fetch(`${BASE}/sentiment`, {
+    method:  "POST",
+    headers: { "Content-Type": "application/json" },
+    body:    JSON.stringify({ text, model }),
+  });
+  return handleResponse<SentimentResult>(res);
 }
