@@ -134,7 +134,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="w-full max-w-[380px]">
+        <div className="w-full max-w-95">
           <div className="mb-8">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] oc-font-mono mb-4" style={{ background: "#E0F5F3", border: "1px solid rgba(13,148,136,0.18)", color: "#0D9488" }}>
               <span className="w-1.5 h-1.5 rounded-full bg-[#0D9488] animate-pulse" />

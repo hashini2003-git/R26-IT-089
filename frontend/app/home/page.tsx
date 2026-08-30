@@ -146,7 +146,7 @@ export default function HomePage() {
       <Header variant="light" user={{ name, patientId }} onLogout={handleLogout} />
 
       {/* Page hero bar */}
-      <div className="pt-[60px]" style={{ background: "linear-gradient(160deg, #091929 0%, #0B1F38 60%, #0D2B4E 100%)" }}>
+      <div className="pt-15" style={{ background: "linear-gradient(160deg, #091929 0%, #0B1F38 60%, #0D2B4E 100%)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-96 h-96 rounded-full pointer-events-none" style={{ background: "radial-gradient(ellipse, rgba(13,148,136,0.14) 0%, transparent 70%)", filter: "blur(40px)", transform: "translate(60px, -40px)" }} />
           <div className="absolute inset-0 pointer-events-none opacity-40" style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
