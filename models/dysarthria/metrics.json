@@ -1,0 +1,33 @@
+{
+  "model": "dysarthria",
+  "val_auc": 0.9999,
+  "val_report": {
+    "0": {
+      "precision": 0.9888888888888889,
+      "recall": 1.0,
+      "f1-score": 0.994413407821229,
+      "support": 267.0
+    },
+    "1": {
+      "precision": 1.0,
+      "recall": 0.9831460674157303,
+      "f1-score": 0.9915014164305949,
+      "support": 178.0
+    },
+    "accuracy": 0.9932584269662922,
+    "macro avg": {
+      "precision": 0.9944444444444445,
+      "recall": 0.9915730337078652,
+      "f1-score": 0.9929574121259119,
+      "support": 445.0
+    },
+    "weighted avg": {
+      "precision": 0.9933333333333334,
+      "recall": 0.9932584269662922,
+      "f1-score": 0.9932486112649753,
+      "support": 445.0
+    }
+  },
+  "train_n": 2079,
+  "val_n": 445
+}

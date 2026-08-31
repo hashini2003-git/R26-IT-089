@@ -9,10 +9,30 @@ PyJWT>=2.8
 
 # MongoDB
 pymongo>=4.6
-dnspython>=2.4  # Required for MongoDB Atlas DNS seedlist
-certifi>=2023.0  # Required for SSL certificate verification
+dnspython>=2.4
+certifi>=2023.0
 
 # Utilities
 requests>=2.31
 pyyaml>=6.0
 python-dotenv>=1.0
+
+# Member 2 risk-factor machine-learning model (artifact compatibility)
+numpy==2.3.2
+pandas==2.3.2
+scikit-learn==1.7.1
+joblib==1.5.2
+scipy==1.16.1
+imageio-ffmpeg==0.6.0
+
+# Member 1 oral-lesion image inference
+Pillow>=11.0
+torch>=2.7
+torchvision>=0.22
+
+# Member 4 speech and vocal-therapy inference
+librosa>=0.11
+soundfile>=0.13
+praat-parselmouth>=0.4.6
+xgboost>=3.0
+
