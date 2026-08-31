@@ -9,6 +9,12 @@ PyJWT>=2.8
 
 # MongoDB
 pymongo>=4.6
+motor==3.7.1
+dnspython>=2.4  # Required for MongoDB Atlas DNS seedlist
+certifi>=2023.0  # Required for SSL certificate verification
+
+# MongoDB
+pymongo>=4.6
 dnspython>=2.4  # Required for MongoDB Atlas DNS seedlist
 certifi>=2023.0  # Required for SSL certificate verification
 
@@ -16,3 +22,10 @@ certifi>=2023.0  # Required for SSL certificate verification
 requests>=2.31
 pyyaml>=6.0
 python-dotenv>=1.0
+
+# Member 2 risk-factor machine-learning model (artifact compatibility)
+numpy==2.3.2
+pandas==2.3.2
+scikit-learn==1.7.1
+joblib==1.5.2
+

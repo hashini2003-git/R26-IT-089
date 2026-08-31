@@ -1,0 +1,243 @@
+import importlib.util
+import math
+import shutil
+import subprocess
+import tempfile
+from functools import lru_cache
+from pathlib import Path
+from typing import Any
+
+import imageio_ffmpeg
+import joblib
+import numpy as np
+import pandas as pd
+from fastapi import HTTPException, UploadFile, status
+
+from src.risk_voice.core.config import settings
+from src.risk_voice.schemas.prediction import GenderPitchReference, VoiceAnalysis, VoicePredictionResponse
+from src.risk_voice.utils.paths import VOICE_FEATURE_SCRIPT_PATH, VOICE_MODEL_PATH
+
+BUNDLED_VOICE_FEATURE_SCRIPT_PATH = Path(__file__).with_name("voice_feature_extractor.py")
+BUNDLED_VOICE_MODEL_PATH = Path(__file__).with_name("models") / "voice_abnormality_model.joblib"
+SUPPORTED_AUDIO_EXTENSIONS = {".wav", ".m4a", ".mp4", ".aac", ".3gp"}
+GENDER_PITCH_BANDS_HZ = {
+    "male": (85.0, 180.0),
+    "female": (165.0, 255.0),
+}
+GENDER_ALIASES = {
+    "male": "male",
+    "female": "female",
+    "other": "other",
+    "prefer not to say": "prefer_not_to_say",
+    "prefer_not_to_say": "prefer_not_to_say",
+}
+
+
+def _finite_float(value: Any) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    return number if math.isfinite(number) else 0.0
+
+
+@lru_cache(maxsize=1)
+def _load_voice_feature_module() -> Any:
+    script_path = VOICE_FEATURE_SCRIPT_PATH if VOICE_FEATURE_SCRIPT_PATH.exists() else BUNDLED_VOICE_FEATURE_SCRIPT_PATH
+    if not script_path.exists():
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Voice feature extraction script is missing.")
+    spec = importlib.util.spec_from_file_location("extract_voice_features", script_path)
+    if spec is None or spec.loader is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Voice feature extractor cannot be loaded.")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    if not hasattr(module, "extract_features"):
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Voice feature extraction function is unavailable.")
+    return module
+
+
+@lru_cache(maxsize=1)
+def _load_voice_model() -> dict[str, Any]:
+    model_path = VOICE_MODEL_PATH if VOICE_MODEL_PATH.exists() else BUNDLED_VOICE_MODEL_PATH
+    if not model_path.exists():
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Voice abnormality model file is missing.")
+    payload = joblib.load(model_path)
+    if not isinstance(payload, dict) or "model" not in payload or "feature_columns" not in payload:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Voice model payload is invalid.")
+    return payload
+
+
+def _voice_label(score: float) -> str:
+    if score < 35:
+        return "stable"
+    if score < 65:
+        return "slight_variation"
+    return "abnormal_marker"
+
+
+def _voice_analysis(score: float, features: dict[str, Any]) -> VoiceAnalysis:
+    jitter = _finite_float(features.get("jitter"))
+    shimmer = _finite_float(features.get("shimmer"))
+    pitch = _finite_float(features.get("pitch_mean"))
+
+    return VoiceAnalysis(
+        mfccPattern="Stable" if score < 35 else "Variable" if score < 65 else "Abnormal",
+        pitchVariation="Normal" if 70 <= pitch <= 350 else "Elevated",
+        jitter="Low" if jitter < 0.03 else "Moderate" if jitter < 0.08 else "High",
+        shimmer="Low" if shimmer < 0.08 else "Moderate" if shimmer < 0.18 else "High",
+    )
+
+
+def _gender_pitch_reference(gender: str | None, features: dict[str, Any]) -> GenderPitchReference:
+    pitch = round(_finite_float(features.get("pitch_mean")), 2)
+    if gender is None or not gender.strip():
+        normalized_gender = "not_provided"
+    else:
+        normalized_gender = GENDER_ALIASES.get(gender.strip().lower())
+        if normalized_gender is None:
+            supported = ", ".join(GENDER_ALIASES)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"gender must be one of: {supported}.",
+            )
+
+    band = GENDER_PITCH_BANDS_HZ.get(normalized_gender)
+    if band is None:
+        return GenderPitchReference(
+            gender=normalized_gender,
+            status="not_available",
+            pitchMeanHz=pitch,
+            lowerHz=None,
+            upperHz=None,
+            interpretation="A gender-specific pitch reference was not applied. The measured pitch is still reported without changing the model probability.",
+        )
+
+    lower, upper = band
+    within = lower <= pitch <= upper
+    return GenderPitchReference(
+        gender=normalized_gender,
+        status="within_reference_band" if within else "outside_reference_band",
+        pitchMeanHz=pitch,
+        lowerHz=lower,
+        upperHz=upper,
+        interpretation=(
+            "Mean pitch is within the broad adult reference band selected for supportive interpretation."
+            if within
+            else "Mean pitch is outside the broad adult reference band selected for supportive interpretation. This alone does not indicate a medical condition."
+        ),
+    )
+
+
+def _probability_for_abnormal_class(model: Any, features_df: pd.DataFrame) -> float:
+    probabilities = model.predict_proba(features_df)[0]
+    classes = list(getattr(model, "classes_", []))
+    if 1 in classes:
+        return float(probabilities[classes.index(1)])
+    if "cancer" in classes:
+        return float(probabilities[classes.index("cancer")])
+    if "abnormal" in classes:
+        return float(probabilities[classes.index("abnormal")])
+    return float(probabilities[-1])
+
+
+def _extract_from_path(path: Path) -> dict[str, Any]:
+    extractor = _load_voice_feature_module()
+    row = pd.Series(
+        {
+            "file_path": str(path),
+            "relative_path": path.name,
+            "split": "uploaded",
+            "speaker_id": "uploaded",
+            "gender": "unknown",
+            "voice_label": "unknown",
+        }
+    )
+    return extractor.extract_features(row)
+
+
+def _convert_to_wav(source_path: Path) -> Path:
+    wav_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+    wav_path = Path(wav_file.name)
+    wav_file.close()
+
+    try:
+        subprocess.run(
+            [
+                imageio_ffmpeg.get_ffmpeg_exe(),
+                "-y",
+                "-i",
+                str(source_path),
+                "-vn",
+                "-ac",
+                "1",
+                "-ar",
+                "16000",
+                str(wav_path),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except Exception as exc:
+        wav_path.unlink(missing_ok=True)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unable to convert recorded audio for voice analysis: {exc}",
+        ) from exc
+
+    return wav_path
+
+
+def predict_voice_file_path(path: Path, gender: str | None = None) -> VoicePredictionResponse:
+    try:
+        features = _extract_from_path(path)
+        payload = _load_voice_model()
+        feature_columns = list(payload["feature_columns"])
+        model = payload["model"]
+        row = {column: _finite_float(features.get(column)) for column in feature_columns}
+        features_df = pd.DataFrame([row], columns=feature_columns)
+        score = round(_probability_for_abnormal_class(model, features_df) * 100, 2)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unable to process uploaded voice file: {exc}") from exc
+
+    raw_features = {
+        "pitch_mean": round(_finite_float(features.get("pitch_mean")), 2),
+        "jitter": round(_finite_float(features.get("jitter")), 4),
+        "shimmer": round(_finite_float(features.get("shimmer")), 4),
+        "spectral_centroid_mean": round(_finite_float(features.get("spectral_centroid_mean")), 2),
+    }
+
+    return VoicePredictionResponse(
+        voiceScore=score,
+        voiceLabel=_voice_label(score),
+        voiceAnalysis=_voice_analysis(score, features),
+        rawFeatures=raw_features,
+        genderPitchReference=_gender_pitch_reference(gender, features),
+        disclaimer=settings.disclaimer,
+    )
+
+
+async def predict_uploaded_voice(file: UploadFile, gender: str | None = None) -> VoicePredictionResponse:
+    filename = file.filename or "upload.wav"
+    suffix = Path(filename).suffix.lower() or ".wav"
+    if suffix not in SUPPORTED_AUDIO_EXTENSIONS:
+        supported = ", ".join(sorted(SUPPORTED_AUDIO_EXTENSIONS))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Only {supported} audio uploads are supported.")
+
+    temp_path: Path | None = None
+    analysis_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+            temp_path = Path(temp_file.name)
+            shutil.copyfileobj(file.file, temp_file)
+
+        analysis_path = temp_path if suffix == ".wav" else _convert_to_wav(temp_path)
+        return predict_voice_file_path(analysis_path, gender=gender)
+    finally:
+        await file.close()
+        if analysis_path and analysis_path != temp_path and analysis_path.exists():
+            analysis_path.unlink(missing_ok=True)
+        if temp_path and temp_path.exists():
+            temp_path.unlink(missing_ok=True)
