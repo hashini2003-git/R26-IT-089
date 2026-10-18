@@ -1,0 +1,377 @@
+"""
+main.py — AI Speech & Voice Analysis API  (FastAPI)
+Endpoints:
+  POST /analyze    Full voice analysis + visualisation data
+  GET  /health     Health check
+"""
+
+import base64
+import io
+import logging
+import tempfile
+from pathlib import Path
+from typing import List
+
+import matplotlib
+matplotlib.use("Agg")          # headless — must come before pyplot import
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+import librosa
+import librosa.display
+import joblib
+import numpy as np
+import parselmouth
+import soundfile as sf
+from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from parselmouth.praat import call
+from pydantic import BaseModel
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(
+    title="AI Speech & Voice Analysis API",
+    description="Detect voice disorders with acoustic feature analysis.",
+    version="3.0.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ── Model paths ───────────────────────────────────────────────────────────────
+MODELS_DIR = Path(__file__).resolve().parent.parent.parent / "models"
+MODELS: dict = {}
+
+
+def load_models():
+    paths = {
+        "voice_quality": MODELS_DIR / "voice_quality" / "voice_quality_model.pkl",
+        "stuttering":    MODELS_DIR / "stuttering"    / "stuttering_model.pkl",
+        "dysarthria":    MODELS_DIR / "dysarthria"    / "dysarthria_model.pkl",
+        "severity":      MODELS_DIR / "severity"      / "severity_model.pkl",
+    }
+    for name, path in paths.items():
+        if path.exists():
+            MODELS[name] = joblib.load(str(path))
+            logger.info(f"Loaded: {name}")
+        else:
+            logger.warning(f"Model not found: {path}")
+
+
+load_models()
+
+# ── Feature list (must match training order) ──────────────────────────────────
+FEATURE_COLS = [
+    "f0_mean","f0_std","f0_min","f0_max","f0_range",
+    "jitter_local","jitter_abs","jitter_rap","jitter_ppq5",
+    "shimmer_local","shimmer_local_db","shimmer_apq3","shimmer_apq5","shimmer_apq11",
+    "hnr",
+    *[f"mfcc_{i+1:02d}_mean" for i in range(13)],
+    *[f"mfcc_{i+1:02d}_std"  for i in range(13)],
+    *[f"delta_mfcc_{i+1:02d}_mean" for i in range(13)],
+    "zcr_mean","zcr_std","rms_mean","rms_std",
+    "spectral_centroid_mean","spectral_centroid_std","spectral_rolloff_mean",
+]
+
+SEVERITY_LABELS = {0: "none", 1: "mild", 2: "moderate", 3: "severe"}
+SEVERITY_COLORS = {0: "green", 1: "yellow", 2: "orange", 3: "red"}
+
+
+# ── Feature extraction ────────────────────────────────────────────────────────
+
+def extract_features(wav_path: str) -> dict:
+    feats = {}
+    try:
+        sound = parselmouth.Sound(wav_path)
+        pitch = call(sound, "To Pitch", 0.0, 75, 600)
+        f0    = pitch.selected_array["frequency"]
+        f0    = f0[f0 > 0]
+        if len(f0) > 0:
+            feats.update({"f0_mean": float(np.mean(f0)),  "f0_std":  float(np.std(f0)),
+                          "f0_min":  float(np.min(f0)),   "f0_max":  float(np.max(f0)),
+                          "f0_range": float(np.ptp(f0))})
+        else:
+            for k in ["f0_mean","f0_std","f0_min","f0_max","f0_range"]:
+                feats[k] = 0.0
+
+        pp = call(sound, "To PointProcess (periodic, cc)", 75, 600)
+        feats["jitter_local"]     = call(pp, "Get jitter (local)",           0,0,0.0001,0.02,1.3)
+        feats["jitter_abs"]       = call(pp, "Get jitter (local, absolute)", 0,0,0.0001,0.02,1.3)
+        feats["jitter_rap"]       = call(pp, "Get jitter (rap)",             0,0,0.0001,0.02,1.3)
+        feats["jitter_ppq5"]      = call(pp, "Get jitter (ppq5)",            0,0,0.0001,0.02,1.3)
+        feats["shimmer_local"]    = call([sound,pp],"Get shimmer (local)",    0,0,0.0001,0.02,1.3,1.6)
+        feats["shimmer_local_db"] = call([sound,pp],"Get shimmer (local_dB)", 0,0,0.0001,0.02,1.3,1.6)
+        feats["shimmer_apq3"]     = call([sound,pp],"Get shimmer (apq3)",     0,0,0.0001,0.02,1.3,1.6)
+        feats["shimmer_apq5"]     = call([sound,pp],"Get shimmer (apq5)",     0,0,0.0001,0.02,1.3,1.6)
+        feats["shimmer_apq11"]    = call([sound,pp],"Get shimmer (apq11)",    0,0,0.0001,0.02,1.3,1.6)
+        har = call(sound, "To Harmonicity (cc)", 0.01, 75, 0.1, 1.0)
+        feats["hnr"] = call(har, "Get mean", 0, 0)
+    except Exception as e:
+        logger.warning(f"Praat error: {e}")
+        for k in ["f0_mean","f0_std","f0_min","f0_max","f0_range",
+                  "jitter_local","jitter_abs","jitter_rap","jitter_ppq5",
+                  "shimmer_local","shimmer_local_db","shimmer_apq3","shimmer_apq5","shimmer_apq11","hnr"]:
+            feats.setdefault(k, 0.0)
+
+    try:
+        y, sr = librosa.load(wav_path, sr=16000, mono=True)
+        mfcc  = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
+        delta = librosa.feature.delta(mfcc)
+        for i in range(13):
+            feats[f"mfcc_{i+1:02d}_mean"] = float(np.mean(mfcc[i]))
+            feats[f"mfcc_{i+1:02d}_std"]  = float(np.std(mfcc[i]))
+            feats[f"delta_mfcc_{i+1:02d}_mean"] = float(np.mean(delta[i]))
+        zcr = librosa.feature.zero_crossing_rate(y)
+        rms = librosa.feature.rms(y=y)
+        cen = librosa.feature.spectral_centroid(y=y, sr=sr)
+        rol = librosa.feature.spectral_rolloff(y=y, sr=sr)
+        feats.update({
+            "zcr_mean": float(np.mean(zcr)), "zcr_std": float(np.std(zcr)),
+            "rms_mean": float(np.mean(rms)), "rms_std": float(np.std(rms)),
+            "spectral_centroid_mean": float(np.mean(cen)),
+            "spectral_centroid_std":  float(np.std(cen)),
+            "spectral_rolloff_mean":  float(np.mean(rol)),
+        })
+    except Exception as e:
+        logger.warning(f"Librosa error: {e}")
+
+    return feats
+
+
+def feats_to_array(feats: dict) -> np.ndarray:
+    return np.array([[feats.get(k, 0.0) for k in FEATURE_COLS]])
+
+
+async def audio_to_wav(file: UploadFile) -> tuple:
+    """Save upload as 16 kHz mono WAV. Returns (path, y_array, sr)."""
+    content = await file.read()
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+        tmp_path = tmp.name
+    y, sr = librosa.load(io.BytesIO(content), sr=16000, mono=True)
+    sf.write(tmp_path, y, 16000, subtype="PCM_16")
+    return tmp_path, y, 16000
+
+
+def determine_primary_disorder(vq_prob: float, stutter_prob: float, dys_prob: float) -> str:
+    if vq_prob < 0.5 and stutter_prob < 0.5 and dys_prob < 0.5:
+        return "healthy"
+    scores = {"parkinsons": vq_prob, "stuttering": stutter_prob, "dysarthria": dys_prob}
+    return max(scores, key=scores.get)
+
+
+# ── Visualisation helpers ─────────────────────────────────────────────────────
+
+def _compute_waveform(y: np.ndarray, n_points: int = 600) -> List[float]:
+    """Return n_points normalised RMS envelope values (0–1)."""
+    if len(y) == 0:
+        return [0.0] * n_points
+    frame = max(1, len(y) // n_points)
+    rms   = librosa.feature.rms(y=y, frame_length=frame * 2, hop_length=frame)[0]
+    idx   = np.linspace(0, len(rms) - 1, n_points).astype(int)
+    env   = rms[idx].astype(float)
+    peak  = float(env.max()) or 1.0
+    return [round(float(v) / peak, 4) for v in env]
+
+
+_DISORDER_ACCENT = {
+    "parkinsons": "#8B5CF6",
+    "stuttering":  "#F59E0B",
+    "dysarthria":  "#EF4444",
+    "healthy":     "#10B981",
+}
+_BG = "#0F172A"
+
+
+def _spectrogram_b64(y: np.ndarray, sr: int, disorder: str, is_healthy: bool) -> str:
+    accent = _DISORDER_ACCENT.get("healthy" if is_healthy else disorder, "#3B82F6")
+    fig, ax = plt.subplots(figsize=(9, 2.6), facecolor=_BG)
+    ax.set_facecolor(_BG)
+
+    mel = librosa.power_to_db(
+        librosa.feature.melspectrogram(y=y, sr=sr, n_mels=80, fmax=8000), ref=np.max)
+    img = librosa.display.specshow(mel, x_axis="time", y_axis="mel",
+                                   sr=sr, ax=ax, cmap="magma", fmax=8000)
+
+    ax.set_xlabel("Time (s)", color="#94A3B8", fontsize=8)
+    ax.set_ylabel("Frequency", color="#94A3B8", fontsize=8)
+    ax.tick_params(colors="#64748B", labelsize=7)
+    for sp in ax.spines.values():
+        sp.set_edgecolor("#1E293B")
+
+    cb = plt.colorbar(img, ax=ax, format="%+2.0f dB", pad=0.02)
+    cb.ax.tick_params(colors="#64748B", labelsize=6)
+
+    plt.tight_layout(pad=0.4)
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", dpi=130, bbox_inches="tight", facecolor=_BG)
+    plt.close(fig)
+    buf.seek(0)
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+def _biomarker_chart_b64(feats: dict, is_healthy: bool) -> str:
+    """6-panel acoustic biomarker chart vs healthy reference band."""
+    # (key, label, ref_min, ref_max, axis_max, multiplier, unit)
+    PANELS = [
+        ("f0_mean",       "Pitch F0",      85,    255,   350,  1,   "Hz"),
+        ("jitter_local",  "Jitter",         0,     1.04,  5,   100,  "%"),
+        ("shimmer_local", "Shimmer",        0,     3.81,  10,  100,  "%"),
+        ("hnr",           "HNR",           20,    33,    40,   1,   "dB"),
+        ("zcr_mean",      "ZCR",           0.02,  0.15,  0.25, 1,   ""),
+        ("rms_mean",      "RMS Energy",    0.005, 0.15,  0.20, 1,   ""),
+    ]
+    BAND = "#064E3B"; G = "#10B981"; W = "#F59E0B"; R = "#EF4444"
+    TEXT = "#CBD5E1"; SUB = "#64748B"; GRID = "#1E293B"
+
+    fig, axes = plt.subplots(1, 6, figsize=(14, 2.4), facecolor=_BG)
+    fig.subplots_adjust(wspace=0.55, left=0.04, right=0.98, top=0.82, bottom=0.22)
+
+    for ax, (key, label, r0, r1, sc, mul, unit) in zip(axes, PANELS):
+        val = feats.get(key, 0.0) * mul
+        rv0, rv1, rsc = r0 * mul, r1 * mul, sc * mul
+
+        in_range = rv0 <= val <= rv1
+        color    = G if in_range else (W if val < rv0 else R)
+
+        ax.set_facecolor(_BG)
+        ax.set_xlim(0, rsc)
+        ax.set_ylim(0, 1)
+        ax.set_yticks([])
+        ax.tick_params(colors=SUB, labelsize=6.5)
+        ax.xaxis.set_major_locator(mticker.MaxNLocator(4))
+        for sp in ax.spines.values():
+            sp.set_visible(False)
+
+        ax.barh(0.5, rv1 - rv0, left=rv0, height=0.55, color=BAND, alpha=0.85)
+        ax.barh(0.5, min(val, rsc), height=0.32, color=color, alpha=0.95)
+        ax.axvline(rv0, color=G, linewidth=0.8, linestyle="--", alpha=0.6)
+        ax.axvline(rv1, color=G, linewidth=0.8, linestyle="--", alpha=0.6)
+
+        ha = "right" if val > rsc * 0.6 else "left"
+        ax.text(min(val, rsc * 0.95), 0.80, f"{val:.3g}{unit}",
+                color=color, fontsize=7, fontweight="bold", ha=ha, va="bottom")
+        ax.set_title(label, color=TEXT, fontsize=7.5, fontweight="bold", pad=4)
+
+    from matplotlib.patches import Patch
+    fig.legend(handles=[Patch(facecolor=BAND, label="Healthy range"),
+                        Patch(facecolor=G, label="In range"),
+                        Patch(facecolor=W, label="Below range"),
+                        Patch(facecolor=R, label="Above range")],
+               loc="lower center", ncol=4, facecolor=_BG, edgecolor=GRID,
+               labelcolor=TEXT, fontsize=6.5, bbox_to_anchor=(0.5, -0.02))
+
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", dpi=130, bbox_inches="tight", facecolor=_BG)
+    plt.close(fig)
+    buf.seek(0)
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+def _mfcc_chart_b64(feats: dict) -> str:
+    means  = [feats.get(f"mfcc_{i+1:02d}_mean", 0.0) for i in range(13)]
+    stds   = [feats.get(f"mfcc_{i+1:02d}_std",  0.0) for i in range(13)]
+    xs     = np.arange(1, 14)
+    colors = ["#3B82F6" if m >= 0 else "#8B5CF6" for m in means]
+    TEXT   = "#CBD5E1"; GRID = "#1E293B"
+
+    fig, ax = plt.subplots(figsize=(7, 2.2), facecolor=_BG)
+    ax.set_facecolor(_BG)
+    ax.bar(xs, means, color=colors, width=0.6, alpha=0.85,
+           yerr=stds, error_kw={"ecolor": "#475569", "capsize": 2, "linewidth": 0.8})
+    ax.axhline(0, color=GRID, linewidth=1)
+    ax.set_xticks(xs)
+    ax.set_xticklabels([f"C{i}" for i in xs], fontsize=7, color="#64748B")
+    ax.tick_params(colors="#64748B", labelsize=7)
+    ax.set_xlabel("MFCC Coefficient", color="#94A3B8", fontsize=8)
+    ax.set_ylabel("Mean", color="#94A3B8", fontsize=8)
+    ax.set_title("MFCC Coefficients (mean ± std)", color=TEXT, fontsize=9, fontweight="bold")
+    for sp in ax.spines.values():
+        sp.set_edgecolor(GRID)
+    ax.grid(axis="y", color=GRID, linewidth=0.5, alpha=0.6)
+
+    plt.tight_layout(pad=0.5)
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", dpi=130, bbox_inches="tight", facecolor=_BG)
+    plt.close(fig)
+    buf.seek(0)
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+# ── Pydantic schema ───────────────────────────────────────────────────────────
+
+class AnalysisResult(BaseModel):
+    is_healthy:         bool
+    primary_disorder:   str
+    severity_score:     float
+    severity_label:     str
+    severity_color:     str
+    voice_quality_prob: float
+    stuttering_prob:    float
+    dysarthria_prob:    float
+    duration_s:         float
+    message:            str
+    # visualisation payloads
+    features:           dict
+    waveform:           List[float]
+    spectrogram_b64:    str
+    biomarker_b64:      str
+    mfcc_b64:           str
+
+
+# ── Endpoints ─────────────────────────────────────────────────────────────────
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "models": list(MODELS.keys()), "version": "3.0.0"}
+
+
+@app.post("/analyze", response_model=AnalysisResult)
+async def analyze(file: UploadFile = File(...)):
+    tmp, y, sr = await audio_to_wav(file)
+    feats      = extract_features(tmp)
+    X          = feats_to_array(feats)
+    duration   = float(len(y) / sr)
+
+    vq_prob = float(MODELS["voice_quality"].predict_proba(X)[0, 1]) if "voice_quality" in MODELS else 0.0
+    st_prob = float(MODELS["stuttering"].predict_proba(X)[0, 1])    if "stuttering"    in MODELS else 0.0
+    dy_prob = float(MODELS["dysarthria"].predict_proba(X)[0, 1])    if "dysarthria"    in MODELS else 0.0
+    sev_raw = float(MODELS["severity"].predict(X)[0])               if "severity"      in MODELS else 0.0
+    sev_raw = max(0.0, min(3.0, sev_raw))
+
+    disorder   = determine_primary_disorder(vq_prob, st_prob, dy_prob)
+    is_healthy = disorder == "healthy"
+    sev_label  = SEVERITY_LABELS[round(sev_raw)] if not is_healthy else "none"
+    sev_color  = SEVERITY_COLORS[round(sev_raw)] if not is_healthy else "green"
+
+    msg_map = {
+        "parkinsons": "Parkinson's-related voice patterns detected.",
+        "stuttering":  "Stuttering or dysfluency patterns detected.",
+        "dysarthria":  "Dysarthric speech patterns detected.",
+    }
+    message = ("No voice disorder detected. Your voice appears healthy."
+               if is_healthy
+               else msg_map.get(disorder, "Voice disorder detected.")
+                    + f" Severity: {sev_label}. Consult a specialist.")
+
+    return AnalysisResult(
+        is_healthy=is_healthy,
+        primary_disorder=disorder,
+        severity_score=round(sev_raw, 3),
+        severity_label=sev_label,
+        severity_color=sev_color,
+        voice_quality_prob=round(vq_prob, 4),
+        stuttering_prob=round(st_prob, 4),
+        dysarthria_prob=round(dy_prob, 4),
+        duration_s=round(duration, 3),
+        message=message,
+        features={k: round(float(v), 6) for k, v in feats.items()},
+        waveform=_compute_waveform(y),
+        spectrogram_b64=_spectrogram_b64(y, sr, disorder, is_healthy),
+        biomarker_b64=_biomarker_chart_b64(feats, is_healthy),
+        mfcc_b64=_mfcc_chart_b64(feats),
+    )

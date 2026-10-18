@@ -1,14 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap');
 @import "tailwindcss";
 
-* { box-sizing: border-box; }
+/* ── Global reset ─────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  background: oklch(0.985 0.004 230);
-  color: oklch(0.22 0.018 250);
-  margin: 0;
+  html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+    scroll-padding-top: 76px; /* = fixed Header height (60px) + breathing room, so anchor jumps (#about, #modules, #how) don't land underneath the fixed header */
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: oklch(0.985 0.004 230);
+    color: oklch(0.22 0.018 250);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Remove default button styles */
+  button {
+    -webkit-appearance: none;
+    appearance: none;
+    outline: none;
+    font-family: inherit;
+  }
+
+  /* Remove default input styles */
+  input, textarea {
+    -webkit-appearance: none;
+    appearance: none;
+    outline: none;
+  }
 }
 
+/* ── Animations ───────────────────────────────────────────── */
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -29,9 +63,9 @@ body {
   to   { opacity: 1; transform: scale(1); }
 }
 
-.animate-spin-slow  { animation: spin 1.4s linear infinite; }
-.animate-fade-in    { animation: fadeIn 0.45s ease forwards; }
-.animate-scale-in   { animation: scaleIn 0.35s ease forwards; }
+.animate-spin-slow { animation: spin 1.4s linear infinite; }
+.animate-fade-in   { animation: fadeIn 0.45s ease forwards; }
+.animate-scale-in  { animation: scaleIn 0.35s ease forwards; }
 
 .skeleton {
   background: linear-gradient(90deg, #E2E8F0 25%, #F1F5F9 50%, #E2E8F0 75%);
@@ -45,7 +79,283 @@ body {
   background: rgba(255,255,255,0.12) !important;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
+/* ── Scrollbar: hidden (mobile app feel) ─────────────────────
+   Only ONE scrollbar behavior can win — chose hidden since this
+   is a mobile-first app (matches Screen/TabBar mobile layout).
+   If you want the visible thin scrollbar instead, delete this
+   block and uncomment the block below it. */
+::-webkit-scrollbar { display: none; }
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Alternative: visible thin scrollbar (uncomment to use instead)
+::-webkit-scrollbar { width: 6px; display: block; }
 ::-webkit-scrollbar-track { background: #F0F4F8; }
 ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+*/
+
+/* ── Safe area (iPhone notch) ─────────────────────────────── */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ── Component1 welcome page: decorative motion ─────────────── */
+@keyframes floatA {
+  0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
+  50%      { transform: translateY(-8px) translateX(3px) rotate(-3deg); }
+}
+@keyframes floatB {
+  0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
+  50%      { transform: translateY(6px) translateX(-5px) rotate(3deg); }
+}
+@keyframes drift {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(8px, -10px); }
+  50%  { transform: translate(-4px, -18px); }
+  75%  { transform: translate(-10px, -6px); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes radarPing {
+  0%   { transform: scale(0.85); opacity: 0.7; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+@keyframes shine {
+  0%   { left: -80px; background: linear-gradient(100deg, transparent, rgba(255,255,255,0.35), transparent); }
+  40%  { left: 110%; background: linear-gradient(100deg, transparent, rgba(255,255,255,0.35), transparent); }
+  100% { left: 110%; background: linear-gradient(100deg, transparent, rgba(255,255,255,0.35), transparent); }
+}
+/* ══════════════════════════════════════════════════════════════
+   OralCare AI design system (from Untitled(7).zip / Figma export)
+   All identifiers below are prefixed "oc-" so they cannot collide
+   with existing keyframes/classes used elsewhere in the app
+   (Component1, vocal_therapy, dashboard, etc). Values are copied
+   1:1 from the design's src/index.css — nothing altered.
+   Used only by: app/page.tsx, app/login, app/register, app/home,
+   app/components/Header.tsx, app/components/Footer.tsx
+   ══════════════════════════════════════════════════════════════ */
+
+@theme {
+  --font-oc-serif: 'Instrument Serif', Georgia, serif;
+  --font-oc-sans: 'DM Sans', system-ui, sans-serif;
+  --font-oc-mono: 'DM Mono', 'Courier New', monospace;
+}
+
+/* ── oc- Animations ── */
+@keyframes oc-fadeInUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes oc-fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes oc-scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes oc-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+@keyframes oc-float-slow {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes oc-pulse-ring {
+  0%   { transform: scale(1); opacity: 0.6; }
+  70%  { transform: scale(2.4); opacity: 0; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+@keyframes oc-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes oc-orb-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(30px, -20px) scale(1.08); }
+  66%       { transform: translate(-15px, 15px) scale(0.96); }
+}
+@keyframes oc-orb-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40%       { transform: translate(-25px, 20px) scale(1.05); }
+  70%       { transform: translate(20px, -15px) scale(0.98); }
+}
+@keyframes oc-scan-line {
+  from { transform: translateY(-100%); }
+  to   { transform: translateY(100vh); }
+}
+
+/* ── oc- Utility classes ── */
+.oc-font-serif { font-family: var(--font-oc-serif); }
+.oc-font-mono  { font-family: var(--font-oc-mono); }
+
+.oc-animate-fade-in-up   { animation: oc-fadeInUp 0.6s ease both; }
+.oc-animate-fade-in      { animation: oc-fadeIn 0.5s ease both; }
+.oc-animate-scale-in     { animation: oc-scaleIn 0.5s ease both; }
+.oc-animate-float        { animation: oc-float 4s ease-in-out infinite; }
+.oc-animate-float-slow   { animation: oc-float-slow 7s ease-in-out infinite; }
+
+.oc-delay-100 { animation-delay: 0.1s; }
+.oc-delay-200 { animation-delay: 0.2s; }
+.oc-delay-300 { animation-delay: 0.3s; }
+.oc-delay-400 { animation-delay: 0.4s; }
+.oc-delay-500 { animation-delay: 0.5s; }
+.oc-delay-600 { animation-delay: 0.6s; }
+.oc-delay-700 { animation-delay: 0.7s; }
+.oc-delay-800 { animation-delay: 0.8s; }
+
+.oc-nav-blur { backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%); }
+
+.oc-card {
+  background: white;
+  border: 1px solid rgba(21,101,192,0.10);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(15,33,55,0.04), 0 4px 16px rgba(21,101,192,0.04);
+  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+}
+.oc-card:hover {
+  box-shadow: 0 4px 24px rgba(21,101,192,0.10), 0 1px 3px rgba(15,33,55,0.06);
+  border-color: rgba(21,101,192,0.18);
+  transform: translateY(-2px);
+}
+
+.oc-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #1565C0, #0D47A1);
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(21,101,192,0.28);
+}
+.oc-btn-primary:hover {
+  background: linear-gradient(135deg, #1976D2, #1565C0);
+  box-shadow: 0 6px 20px rgba(21,101,192,0.38);
+  transform: translateY(-1px);
+}
+
+.oc-btn-mint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #0D9488, #0a7a6e);
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(13,148,136,0.28);
+}
+.oc-btn-mint:hover {
+  background: linear-gradient(135deg, #14B8A6, #0D9488);
+  box-shadow: 0 6px 20px rgba(13,148,136,0.38);
+  transform: translateY(-1px);
+}
+
+.oc-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  background: rgba(255,255,255,0.08);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.oc-btn-ghost:hover {
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.22);
+}
+
+.oc-input-clinical {
+  width: 100%;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-family: var(--font-oc-sans);
+  color: #0F2137;
+  background: white;
+  border: 1.5px solid rgba(21,101,192,0.15);
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.oc-input-clinical:focus {
+  border-color: #1565C0;
+  box-shadow: 0 0 0 3px rgba(21,101,192,0.10);
+}
+.oc-input-clinical::placeholder {
+  color: #9BAABA;
+}
+
+.oc-chip-blue {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-family: var(--font-oc-mono);
+  letter-spacing: 0.04em;
+  color: #1565C0;
+  background: #E3EEF9;
+  border: 1px solid rgba(21,101,192,0.15);
+  border-radius: 99px;
+}
+.oc-chip-mint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-family: var(--font-oc-mono);
+  letter-spacing: 0.04em;
+  color: #0D9488;
+  background: #E0F5F3;
+  border: 1px solid rgba(13,148,136,0.15);
+  border-radius: 99px;
+}
+.oc-chip-lavender {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-family: var(--font-oc-mono);
+  letter-spacing: 0.04em;
+  color: #8B7FD1;
+  background: #EDEBFA;
+  border: 1px solid rgba(139,127,209,0.15);
+  border-radius: 99px;
+}
+
+/* ── oc- Section reveal utility (JS drives opacity/transform) ── */
+.oc-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+}
+.oc-reveal.oc-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.oc-reveal-delay-1 { transition-delay: 0.1s; }
+.oc-reveal-delay-2 { transition-delay: 0.2s; }
+.oc-reveal-delay-3 { transition-delay: 0.3s; }
+.oc-reveal-delay-4 { transition-delay: 0.4s; }

@@ -1,0 +1,95 @@
+{
+  "model_version": "1.0.0",
+  "algorithm": "HistGradientBoostingRegressor",
+  "target": "preventive_risk_score",
+  "target_source": "rule_derived",
+  "target_description": "Preventive screening score generated from transparent scoring rules; not a clinician-confirmed diagnosis outcome.",
+  "trained_rows": 84922,
+  "test_rows": 16985,
+  "random_state": 42,
+  "trained_at_utc": "2026-08-29T12:26:27.088596+00:00",
+  "held_out_metrics": {
+    "mae": 0.7717312001175048,
+    "rmse": 1.120093628285184,
+    "r2": 0.9975270249626341,
+    "risk_level_accuracy": 0.98899028554607,
+    "risk_level_macro_f1": 0.9774911569157195
+  },
+  "features_used": [
+    "Age",
+    "Gender",
+    "Tobacco Use",
+    "Alcohol Consumption",
+    "HPV Infection",
+    "Betel Quid Use",
+    "Poor Oral Hygiene",
+    "Diet (Fruits & Vegetables Intake)",
+    "Family History of Cancer",
+    "Compromised Immune System",
+    "Oral Lesions",
+    "Unexplained Bleeding",
+    "Difficulty Swallowing",
+    "White or Red Patches in Mouth"
+  ],
+  "risk_level_distribution": {
+    "High": 48817,
+    "Moderate": 29348,
+    "Low": 6757
+  },
+  "classification_report": {
+    "Low": {
+      "precision": 0.9067114093959732,
+      "recall": 1.0,
+      "f1-score": 0.9510735656458993,
+      "support": 1351.0
+    },
+    "Moderate": {
+      "precision": 0.9973744092420794,
+      "recall": 0.9706984667802385,
+      "f1-score": 0.9838556505223172,
+      "support": 5870.0
+    },
+    "High": {
+      "precision": 0.9966264567573093,
+      "recall": 0.9984637443670626,
+      "f1-score": 0.997544254578942,
+      "support": 9764.0
+    },
+    "accuracy": 0.98899028554607,
+    "macro avg": {
+      "precision": 0.966904091798454,
+      "recall": 0.9897207370491005,
+      "f1-score": 0.9774911569157195,
+      "support": 16985.0
+    },
+    "weighted avg": {
+      "precision": 0.9897330362156807,
+      "recall": 0.98899028554607,
+      "f1-score": 0.9891171714726171,
+      "support": 16985.0
+    }
+  },
+  "confusion_matrix_labels": [
+    "Low",
+    "Moderate",
+    "High"
+  ],
+  "confusion_matrix": [
+    [
+      1351,
+      0,
+      0
+    ],
+    [
+      139,
+      5698,
+      33
+    ],
+    [
+      0,
+      15,
+      9749
+    ]
+  ],
+  "research_warning": "This is a machine-learning surrogate for rule-derived preventive scores. Its performance measures agreement with those rules, not clinical oral-cancer diagnostic validity."
+}

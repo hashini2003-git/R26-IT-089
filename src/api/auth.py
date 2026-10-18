@@ -4,11 +4,16 @@ auth.py — JWT token creation and verification
 
 import os
 from datetime import datetime, timedelta, timezone
-
 import jwt
+from dotenv import load_dotenv
+from pathlib import Path
 
-SECRET_KEY  = os.getenv("JWT_SECRET", "oc-speech-tracker-secret-2026")
-ALGORITHM   = "HS256"
+# Load environment variables from .env file in the project root
+env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
+
+SECRET_KEY = os.getenv("JWT_SECRET", "oc-speech-tracker-secret-2026")
+ALGORITHM = "HS256"
 EXPIRE_DAYS = 30
 
 

@@ -1,0 +1,21 @@
+{
+  "model": "severity",
+  "val_mae": 0.3006,
+  "val_r2": 0.7389,
+  "test_mae": 0.3241,
+  "test_r2": 0.7284,
+  "cv_mae_mean": 0.2156,
+  "cv_mae_std": 0.01,
+  "cv_r2_mean": 0.8551,
+  "cv_r2_std": 0.0134,
+  "severity_map": {
+    "none": 0,
+    "mild": 1,
+    "moderate": 2,
+    "severe": 3
+  },
+  "severe_promoted": true,
+  "train_n": 4074,
+  "val_n": 918,
+  "test_n": 948
+}

@@ -1,0 +1,33 @@
+{
+  "model": "voice_quality",
+  "val_auc": 0.9996,
+  "val_report": {
+    "0": {
+      "precision": 0.9810126582278481,
+      "recall": 1.0,
+      "f1-score": 0.9904153354632588,
+      "support": 310.0
+    },
+    "1": {
+      "precision": 1.0,
+      "recall": 0.9555555555555556,
+      "f1-score": 0.9772727272727273,
+      "support": 135.0
+    },
+    "accuracy": 0.9865168539325843,
+    "macro avg": {
+      "precision": 0.990506329113924,
+      "recall": 0.9777777777777779,
+      "f1-score": 0.983844031367993,
+      "support": 445.0
+    },
+    "weighted avg": {
+      "precision": 0.9867728630351302,
+      "recall": 0.9865168539325843,
+      "f1-score": 0.9864282520796144,
+      "support": 445.0
+    }
+  },
+  "train_n": 2079,
+  "val_n": 445
+}

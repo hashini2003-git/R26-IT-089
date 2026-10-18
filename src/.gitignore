@@ -136,7 +136,7 @@ Thumbs.db
 # FastAPI
 __pycache__/
 .pytest_cache/
+.coverage
 
-# Environment variables
-.env.local
-.env.*.local
+# uvicorn
+.uvicorn_cache/

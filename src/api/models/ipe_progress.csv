@@ -1,0 +1,7 @@
+patient_id,patient_name,visit_number,date,image_name,class_idx,class_name,confidence,ppi,fis_speech,fis_swallow,fis_mouth,erythema,ulceration,texture,physio,pain_label,tri,frs,deterioration,deterioration_msg,risk_progression,recovery_date,visual_change_erythema,visual_change_ulcer,visual_change_texture
+P001,Test Patient,1,2026-06-15,5 - LA.jpg,0,Normal,0.7936,0.1663,0.0,0.0,0.0,0.1005,0.0113,0.0663,0.8145, No/Minimal Pain,,100.0,False,First visit — monitoring started,0.7936389446258545,,,,
+P001,Test Patient,2,2026-06-15,SMITA00109_R_LL.jpg,0,Normal,0.7949,0.163,0.0,0.0,0.0,0.103,0.0102,0.0592,0.8177, No/Minimal Pain,,100.0,False,✅ No deterioration detected,0.0,,0.003,-0.001,-0.007
+P001,Test Patient,3,2026-06-15,SMITA00135_R_DT.jpg,0,Normal,0.8091,0.161,0.0,0.0,0.0,0.0906,0.0094,0.0728,0.8457, No/Minimal Pain,,100.0,False,✅ No deterioration detected,0.0,,-0.012,-0.001,0.014
+P002,OPMD Test Patient,1,2026-05-04,visit1_opmd.jpg,2,OPMD,0.85,7.8,0.55,0.41,0.36,0.82,0.71,0.55,0.08,🔴 Severe Pain,,56.0,False,First visit — monitoring started,0.85,,,,
+P002,OPMD Test Patient,2,2026-05-25,visit2_opmd.jpg,2,OPMD,0.76,5.2,0.38,0.29,0.24,0.61,0.45,0.42,0.12,🟠 Moderate Pain,0.43,69.7,False,✅ No deterioration detected,0.456,,-0.21,-0.26,-0.13
+P002,OPMD Test Patient,3,2026-06-15,visit3_opmd.jpg,1,Variation from Normal,0.68,2.4,0.18,0.12,0.1,0.31,0.18,0.22,0.38,🟡 Mild Pain,0.9,86.7,False,✅ No deterioration detected,0.136,2026-07-04,-0.3,-0.27,-0.2

@@ -158,7 +158,48 @@ All merges are recorded in **two places**:
 
 ## 6) How to Run (High-Level)
 
-Each component has its own scripts or notebooks inside its folder. Refer to the component-level README for detailed setup.
+### Member 2 trained risk-factor model
+
+The authenticated structured-risk endpoint is:
+
+```text
+POST /risk-voice/api/predict/risk-factors
+```
+
+The bundled model is a `HistGradientBoostingRegressor` trained on 84,922
+structured records to reproduce rule-derived preventive scores. Its reported
+98.90% risk-level accuracy measures agreement with those source rules and must
+not be presented as clinical oral-cancer diagnostic accuracy. The rule engine is
+used at runtime only for readable insights and recommendations; the returned
+structured score comes from the trained model.
+
+### Run the integrated web application
+
+From the repository root, install and start the FastAPI backend on port 8001:
+
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn src.api.main:app --host 127.0.0.1 --port 8001
+```
+
+In a second terminal, start the Next.js frontend:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000`. The API documentation is available at
+`http://localhost:8001/docs`. The frontend reads `NEXT_PUBLIC_API_URL` from
+`frontend/.env.local`; its fallback URL also uses port 8001.
+
+Component 1 image inference additionally requires the excluded checkpoint
+`src/api/models/ipe_best_model_v2.pth`, or an `IPE_MODEL_PATH` environment
+variable pointing to that checkpoint.
+
+Each component also has scripts or notebooks inside its folder. Refer to the component-level README for detailed setup.
 
 General steps:
 1. Install dependencies (Python 3.8+):
@@ -191,3 +232,14 @@ General steps:
 | Member 2 | IT22276278| Risk Assessment & Voice Progression Monitoring | Scikit-learn, Librosa, MFCC |
 | Member 3 | IT22285706| Speech & Voice Therapy Monitoring & Care Planning | Signal Processing, NLP, AI Classification |
 | Member 4 | IT22543882 | AI-Powered Personalized Meditation Environment | ML Recommendation, Mobile UI |
+
+---
+
+## Integrated Component 2 Web Module
+
+The authenticated risk and voice backend is located in `src/risk_voice` and is
+mounted at `/risk-voice`. Its Next.js interface is available at `/component2`,
+including structured risk assessment, voice recording, the final multimodal
+Low/Moderate/Elevated result, patient-scoped history, and weekly monitoring.
+
+See `src/risk_voice/README.md` for routes and startup instructions.
