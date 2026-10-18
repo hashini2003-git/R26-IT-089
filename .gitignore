@@ -17,6 +17,17 @@ History/
 ~*\n# OneDrive placeholder files
 *.onetoc2
 
+# Unity generated files
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
 # Visual Studio / .NET
 *.user
 *.suo
