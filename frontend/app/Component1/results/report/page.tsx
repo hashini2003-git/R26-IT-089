@@ -81,7 +81,7 @@ export default function ReportPage() {
       <Glass style={{ marginBottom: 14, textAlign: "center", padding: "30px 20px" }}>
         <div style={{
           width: 72, height: 72, borderRadius: 20, margin: "0 auto 16px",
-          background: `linear-gradient(140deg, ${C.teal}, ${C.lavender})`,
+          background: `linear-gradient(140deg, ${C.teal}, ${C.blue})`,
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <Icon name="document" size={30} color="#fff" strokeWidth={1.6} />

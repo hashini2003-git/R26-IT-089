@@ -10,28 +10,28 @@ import type { AnalysisResult, ModelScore, SentimentResult } from "../../lib/type
 // ── Design tokens ─────────────────────────────────────────────────────────────
 // Updated to match NavBar/SideBar green color scheme
 const D = {
-  bg:          "oklch(0.985 0.004 150)",
+  bg:          "#F4F8FD",
   surface:     "#ffffff",
-  border:      "oklch(0.92 0.01 145)",
-  borderStrong:"oklch(0.86 0.015 145)",
-  text:        "oklch(0.22 0.015 150)",
-  textMuted:   "oklch(0.50 0.015 150)",
-  textDim:     "oklch(0.62 0.012 150)",
-  accent:      "oklch(0.62 0.14 150)",
-  accentSoft:  "oklch(0.96 0.03 150)",
-  accentInk:   "oklch(0.38 0.08 150)",
-  low:         "oklch(0.62 0.13 160)",
-  lowSoft:     "oklch(0.95 0.04 160)",
-  lowInk:      "oklch(0.40 0.10 160)",
-  mid:         "oklch(0.75 0.15 85)", // Yellow for mild
-  midSoft:     "oklch(0.97 0.06 85)",
-  midInk:      "oklch(0.50 0.12 70)",
-  moderate:    "oklch(0.65 0.18 55)", // Orange for moderate
-  moderateSoft: "oklch(0.96 0.08 55)",
-  moderateInk:  "oklch(0.45 0.15 55)",
-  high:        "oklch(0.62 0.16 25)",
-  highSoft:    "oklch(0.95 0.04 25)",
-  highInk:     "oklch(0.42 0.13 25)",
+  border:      "rgba(21,101,192,0.10)",
+  borderStrong:"rgba(21,101,192,0.18)",
+  text:        "#0F2137",
+  textMuted:   "#4A6070",
+  textDim:     "#60758A",
+  accent:      "#0D9488",
+  accentSoft:  "#E0F5F3",
+  accentInk:   "#0B7A70",
+  low:         "#2ECC91",
+  lowSoft:     "#E8F8F0",
+  lowInk:      "#08735E",
+  mid:         "#F5C242",
+  midSoft:     "#FFF7DA",
+  midInk:      "#8A5A00",
+  moderate:    "#FF9F43",
+  moderateSoft: "#FFF0E2",
+  moderateInk:  "#A34205",
+  high:        "#E8483A",
+  highSoft:    "#FDEDEB",
+  highInk:     "#B42318",
   shadow:      "0 1px 3px rgba(15,32,60,0.06), 0 1px 0 rgba(15,32,60,0.02)",
   shadowMd:    "0 4px 16px rgba(15,32,60,0.07)",
   fontMono:    "'JetBrains Mono', ui-monospace, monospace",
@@ -158,9 +158,9 @@ const PROB_BARS = [
 ];
 
 const MOOD_CFG = {
-  positive: { icon: "😊", label: "Feeling Positive",  bg: D.lowSoft,  color: D.lowInk,  border: "oklch(0.85 0.08 160)" },
+  positive: { icon: "😊", label: "Feeling Positive",  bg: D.lowSoft,  color: D.lowInk,  border: "#B7E8D0" },
   neutral:  { icon: "😐", label: "Feeling Neutral",   bg: D.bg,       color: D.textMuted, border: D.border },
-  negative: { icon: "😔", label: "Feeling Down",      bg: D.highSoft, color: D.highInk, border: "oklch(0.85 0.08 25)" },
+  negative: { icon: "😔", label: "Feeling Down",      bg: D.highSoft, color: D.highInk, border: "#F2B6B0" },
 } as const;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -704,7 +704,7 @@ if (phase === "recording") {
 
       {/* Spectrogram - Full width */}
       <div style={{
-        background: "oklch(0.12 0.015 150)", borderRadius: 10,
+        background: "#0B1F38", borderRadius: 10,
         overflow: "hidden", marginBottom: "1rem",
       }}>
         <div style={{
@@ -904,7 +904,7 @@ if (phase === "recording") {
   const getSeverityColors = () => {
     if (isHealthy) {
       return {
-        background: "linear-gradient(135deg, oklch(0.48 0.13 160) 0%, oklch(0.40 0.12 160) 100%)",
+        background: "linear-gradient(135deg, #0D9488 0%, #0B7A70 100%)",
         icon: "",
         label: "Healthy"
       };
@@ -912,25 +912,25 @@ if (phase === "recording") {
     switch(severity) {
       case "mild":
         return {
-          background: "linear-gradient(135deg, oklch(0.70 0.18 85) 0%, oklch(0.60 0.16 85) 100%)",
+          background: "linear-gradient(135deg, #F5C242 0%, #D99D16 100%)",
           icon: "",
           label: "Mild Concern"
         };
       case "moderate":
         return {
-          background: "linear-gradient(135deg, oklch(0.65 0.18 55) 0%, oklch(0.55 0.16 55) 100%)",
+          background: "linear-gradient(135deg, #FF9F43 0%, #E67E22 100%)",
           icon: "️",
           label: "Moderate Concern"
         };
       case "severe":
         return {
-          background: "linear-gradient(135deg, oklch(0.50 0.18 25) 0%, oklch(0.40 0.16 25) 100%)",
+          background: "linear-gradient(135deg, #E8483A 0%, #B42318 100%)",
           icon: "",
           label: "Needs Attention"
         };
       default:
         return {
-          background: "linear-gradient(135deg, oklch(0.60 0.15 75) 0%, oklch(0.50 0.14 75) 100%)",
+          background: "linear-gradient(135deg, #1565C0 0%, #0D47A1 100%)",
           icon: "️",
           label: "Concern Detected"
         };
@@ -984,7 +984,7 @@ if (phase === "recording") {
       {error && (
         <div style={{
           marginBottom:"1rem", padding:"10px 14px",
-          background:D.highSoft, border:`1px solid oklch(0.85 0.06 25)`,
+          background:D.highSoft, border:"1px solid #F2B6B0",
           borderRadius:8, color:D.high, fontSize:13,
         }}>
           <span style={{ marginRight:8 }}></span> {error}
@@ -1142,7 +1142,7 @@ if (phase === "recording") {
             <div style={{
               display:"flex", alignItems:"center", gap:"0.5rem",
               padding:"9px 14px", background:D.lowSoft,
-              border:`1px solid oklch(0.85 0.08 160)`, borderRadius:8,
+              border:"1px solid #B7E8D0", borderRadius:8,
               fontSize:"0.82rem", color:D.lowInk, fontWeight:600,
             }}>
               <Icons.Chart />
@@ -1171,7 +1171,7 @@ if (phase === "recording") {
               <div style={{
                 padding:"1.1rem 1.25rem", borderRadius:12,
                 background: isHealthy ? D.lowSoft : (severity === "severe" ? D.highSoft : severity === "moderate" ? D.moderateSoft : D.midSoft),
-                border:`1px solid ${isHealthy ? "oklch(0.85 0.08 160)" : severity === "moderate" ? "oklch(0.85 0.12 55)" : "oklch(0.88 0.08 80)"}`,
+                border:`1px solid ${isHealthy ? "#B7E8D0" : severity === "moderate" ? "#FFD0A3" : "#F1D98E"}`,
               }}>
                 <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                   <span style={{ fontSize:"1.4rem" }}>
@@ -1207,7 +1207,7 @@ if (phase === "recording") {
                   const active = !isHealthy && primaryKey === key;
                   return (
                     <div key={key} style={{
-                      background: active ? "oklch(0.22 0.015 150)" : D.surface,
+                      background: active ? "#0B1F38" : D.surface,
                       borderRadius:12, padding:"1.1rem",
                       border: active ? "none" : `1px solid ${D.border}`,
                       boxShadow: active ? D.shadowMd : D.shadow, textAlign:"center",
@@ -1238,7 +1238,7 @@ if (phase === "recording") {
             <div style={{
               background:D.accentSoft, borderRadius:10, padding:"0.9rem 1.1rem",
               display:"flex", alignItems:"center", justifyContent:"space-between",
-              border:`1px solid oklch(0.88 0.05 145)`, flexWrap:"wrap" as const, gap:"0.6rem",
+              border:"1px solid rgba(21,101,192,0.18)", flexWrap:"wrap" as const, gap:"0.6rem",
             }}>
               <div style={{ fontSize:"0.85rem", color:D.accentInk, fontWeight:600, display:"flex", alignItems:"center", gap:8 }}>
                 <Icons.Chart />

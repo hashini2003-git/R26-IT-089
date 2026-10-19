@@ -11,7 +11,7 @@ export default function VocalTherapyPage() {
   }, [router]);
   
   return (
-    <div style={{ textAlign: "center", padding: "2rem", color: "oklch(0.48 0.018 250)" }}>
+    <div style={{ textAlign: "center", padding: "2rem", color: "#4A6070" }}>
       Redirecting to guide...
     </div>
   );

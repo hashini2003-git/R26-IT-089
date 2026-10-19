@@ -12,13 +12,15 @@ import {
 /* ── Palette ─────────────────────────────────────────────────────── */
 const BLUE      = "#1565C0";
 const BLUE_TINT = "#E3EEF9";
-const MINT      = "#2E9E8A";
-const MINT_TINT = "#E0F2EE";
+const MINT      = "#0D9488";
+const MINT_TINT = "#E0F5F3";
+const GREEN     = "#2ECC91";
+const GREEN_TINT = "#E9F9F2";
 const NAVY      = "#0B1F38";
 const NAVY2     = "#091929";
-const BG        = "#F3F8FD";
-const BG_MINT   = "#EDF6F4";
-const BORDER    = "rgba(21,101,192,0.12)";
+const BG        = "#F4F8FD";
+const BG_MINT   = "#E0F5F3";
+const BORDER    = "rgba(21,101,192,0.10)";
 
 const FEATURES = [
   { icon: Droplet,     label: "Redness",    body: "Degree of tissue inflammation visible in the oral cavity.", value: 82 },
@@ -30,7 +32,7 @@ const FEATURE_COLORS = [
   { tint: BLUE_TINT, ink: BLUE },
   { tint: MINT_TINT, ink: MINT },
   { tint: BLUE_TINT, ink: BLUE },
-  { tint: MINT_TINT, ink: MINT },
+  { tint: GREEN_TINT, ink: GREEN },
 ];
 
 const STEPS = [
@@ -107,7 +109,7 @@ function WatermarkRing() {
     <svg viewBox="0 0 320 320" className="pointer-events-none absolute -right-20 -top-12 h-95 w-95 opacity-[0.12]">
       <circle cx="160" cy="160" r={r} fill="none" stroke="white" strokeWidth="1" />
       <circle
-        cx="160" cy="160" r={r} fill="none" stroke="#5FBFA3" strokeWidth="12" strokeLinecap="round"
+        cx="160" cy="160" r={r} fill="none" stroke="#0D9488" strokeWidth="12" strokeLinecap="round"
         strokeDasharray={c} strokeDashoffset={drawn ? c * 0.24 : c}
         transform="rotate(-90 160 160)"
         style={{ transition: "stroke-dashoffset 1.8s cubic-bezier(0.22,1,0.36,1)" }}
@@ -211,9 +213,9 @@ export default function Component1WelcomePage() {
           </Reveal>
 
           <Reveal delay={320} className="relative">
-            <div className="inline-flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: "rgba(46,158,138,0.15)", border: "1px solid rgba(46,158,138,0.3)" }}>
-              <ShieldCheck size={13} style={{ color: "#5FBFA3" }} />
-              <span className="text-[11px]" style={{ color: "#5FBFA3" }}>
+            <div className="inline-flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: "rgba(46,204,145,0.15)", border: "1px solid rgba(46,204,145,0.3)" }}>
+              <ShieldCheck size={13} style={{ color: GREEN }} />
+              <span className="text-[11px]" style={{ color: GREEN }}>
                 Clinical-grade · HIPAA-aligned · Encrypted end-to-end
               </span>
             </div>
@@ -259,8 +261,8 @@ export default function Component1WelcomePage() {
               <Reveal delay={140}>
                 <button
                   onClick={() => router.push("/Component1/dashboard")}
-                  className="w-full rounded-xl border p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(46,158,138,0.12)]"
-                  style={{ background: "white", borderColor: "rgba(46,158,138,0.22)", boxShadow: "0 2px 8px rgba(15,33,55,0.05)" }}
+                  className="w-full rounded-xl border p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(46,204,145,0.12)]"
+                  style={{ background: "white", borderColor: "rgba(46,204,145,0.22)", boxShadow: "0 2px 8px rgba(15,33,55,0.05)" }}
                 >
                   <div className="flex items-start gap-4">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg" style={{ background: MINT_TINT }}>

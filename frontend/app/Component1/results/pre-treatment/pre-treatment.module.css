@@ -67,12 +67,18 @@
 
 .walker { transform-box: view-box; transform-origin: 120px 157px; }
 .walkArmLeft,.walkArmRight,.walkLegLeft,.walkLegRight { transform-box: view-box; }
-.walkArmLeft { transform-origin: 102px 75px; }
-.walkArmRight { transform-origin: 138px 75px; }
-.walkLegLeft { transform-origin: 108px 111px; }
-.walkLegRight { transform-origin: 132px 111px; }
-.activityPlaying .walkArmLeft,.activityPlaying .walkLegRight { animation: walkingSwing 1.4s ease-in-out infinite alternate; }
-.activityPlaying .walkArmRight,.activityPlaying .walkLegLeft { animation: walkingSwing 1.4s ease-in-out infinite alternate-reverse; }
+.walkArmLeft { transform-origin: 111px 70px; }
+.walkArmRight { transform-origin: 132px 70px; }
+.walkLegLeft { transform-origin: 117px 105px; }
+.walkLegRight { transform-origin: 123px 105px; }
+.walkShinLeft { transform-box: view-box; transform-origin: 109px 129px; }
+.walkShinRight { transform-box: view-box; transform-origin: 132px 129px; }
+.activityPlaying .walkArmLeft { animation: walkingArmSwing 2s ease-in-out infinite; }
+.activityPlaying .walkArmRight { animation: walkingArmSwing 2s ease-in-out infinite; animation-delay: -1s; }
+.activityPlaying .walkLegRight { animation: walkingLegSwing 2s ease-in-out infinite; }
+.activityPlaying .walkLegLeft { animation: walkingLegSwing 2s ease-in-out infinite; animation-delay: -1s; }
+.activityPlaying .walkShinRight { animation: walkingKneeFlex 2s ease-in-out infinite; }
+.activityPlaying .walkShinLeft { animation: walkingKneeFlex 2s ease-in-out infinite; animation-delay: -1s; }
 .seatArmLeft,.seatArmRight,.seatFootLeft,.seatFootRight { transform-box: view-box; }
 .seatArmLeft { transform-origin: 105px 68px; }
 .seatArmRight { transform-origin: 135px 68px; }
@@ -125,7 +131,20 @@
   70% { transform: rotate(7deg); }
 }
 
-@keyframes walkingSwing { to { transform: rotate(20deg); } }
+@keyframes walkingArmSwing {
+  0%, 100% { transform: rotate(-14deg); }
+  50% { transform: rotate(14deg); }
+}
+@keyframes walkingLegSwing {
+  0%, 100% { transform: rotate(-18deg); }
+  25%, 75% { transform: rotate(0deg); }
+  50% { transform: rotate(18deg); }
+}
+@keyframes walkingKneeFlex {
+  0%, 100% { transform: rotate(18deg); }
+  25%, 75% { transform: rotate(8deg); }
+  50% { transform: rotate(0deg); }
+}
 @keyframes seatedArmLiftLeft { to { transform: rotate(35deg); } }
 @keyframes seatedArmLiftRight { to { transform: rotate(-35deg); } }
 @keyframes seatedFootTap { to { transform: rotate(9deg); } }
@@ -139,6 +158,10 @@
   .activityPlaying .walkArmRight,
   .activityPlaying .walkLegLeft,
   .activityPlaying .walkLegRight {
+    animation: none !important;
+  }
+  .activityPlaying .walkShinLeft,
+  .activityPlaying .walkShinRight {
     animation: none !important;
   }
   .seatedActivityPlaying .seatArmLeft,

@@ -7,25 +7,25 @@ import { isLoggedIn } from "../../lib/auth";
 
 // ── Design tokens matches dashboard/analyze/exercises/doctors pages ──────
 const D = {
-  bg:          "oklch(0.985 0.004 150)",
+  bg:          "#F4F8FD",
   surface:     "#ffffff",
-  border:      "oklch(0.92 0.01 145)",
-  borderStrong:"oklch(0.86 0.015 145)",
-  text:        "oklch(0.22 0.015 150)",
-  textMuted:   "oklch(0.50 0.015 150)",
-  textDim:     "oklch(0.62 0.012 150)",
-  accent:      "oklch(0.62 0.14 150)",
-  accentSoft:  "oklch(0.96 0.03 150)",
-  accentInk:   "oklch(0.38 0.08 150)",
-  low:         "oklch(0.62 0.13 160)",
-  lowSoft:     "oklch(0.95 0.04 160)",
-  lowInk:      "oklch(0.40 0.10 160)",
-  mid:         "oklch(0.72 0.13 80)",
-  midSoft:     "oklch(0.96 0.05 85)",
-  midInk:      "oklch(0.42 0.10 70)",
-  high:        "oklch(0.62 0.16 25)",
-  highSoft:    "oklch(0.95 0.04 25)",
-  highInk:     "oklch(0.42 0.13 25)",
+  border:      "rgba(21,101,192,0.10)",
+  borderStrong:"rgba(21,101,192,0.18)",
+  text:        "#0F2137",
+  textMuted:   "#4A6070",
+  textDim:     "#60758A",
+  accent:      "#0D9488",
+  accentSoft:  "#E0F5F3",
+  accentInk:   "#0B7A70",
+  low:         "#2ECC91",
+  lowSoft:     "#E8F8F0",
+  lowInk:      "#08735E",
+  mid:         "#F5C242",
+  midSoft:     "#FFF7DA",
+  midInk:      "#8A5A00",
+  high:        "#E8483A",
+  highSoft:    "#FDEDEB",
+  highInk:     "#B42318",
   shadow:      "0 1px 3px rgba(15,32,60,0.06), 0 1px 0 rgba(15,32,60,0.02)",
   shadowMd:    "0 4px 16px rgba(15,32,60,0.07)",
   fontMono:    "'JetBrains Mono', ui-monospace, monospace",
@@ -316,7 +316,7 @@ export default function GuidePage() {
 
         {/* ── Header ── */}
         <div style={{
-          background: `linear-gradient(135deg, oklch(0.22 0.14 160) 0%, ${D.accent} 100%)`,
+          background: "linear-gradient(135deg, #0B1F38 0%, #0D9488 100%)",
           borderRadius: 14, padding: "clamp(1.25rem, 4vw, 2rem) clamp(1.25rem, 4vw, 1.75rem)",
           color: "#fff", marginBottom: "1.5rem",
         }}>
@@ -339,7 +339,7 @@ export default function GuidePage() {
         </div>
 
         {/* ── In a nutshell ── */}
-        <Card style={{ marginBottom: "1.5rem", background: D.accentSoft, border: `1px solid oklch(0.88 0.05 145)` }}>
+        <Card style={{ marginBottom: "1.5rem", background: D.accentSoft, border: "1px solid rgba(21,101,192,0.18)" }}>
           <div style={{ display: "flex", gap: "0.85rem", alignItems: "flex-start" }}>
             <span style={{ color: D.accentInk, flexShrink: 0, marginTop: 2 }}><Icons.Heart /></span>
             <div>
@@ -365,7 +365,7 @@ export default function GuidePage() {
           <AppPageCard
             icon={<Icons.Chart />}
             badge="Page 1 · Your progress"
-            badgeColor="oklch(0.55 0.10 180)"
+            badgeColor="#1565C0"
             title="Dashboard"
             tagline="Your home base. A snapshot of how your voice has changed since day one, and how it's trending now."
             points={[
@@ -411,7 +411,7 @@ export default function GuidePage() {
           <AppPageCard
             icon={<Icons.Doctor />}
             badge="Page 4 · Professional help"
-            badgeColor="oklch(0.62 0.15 42)"
+            badgeColor="#FF9F43"
             title="Doctors"
             tagline="If your results suggest you need a specialist, this is where you find and book one."
             points={[
@@ -437,7 +437,7 @@ export default function GuidePage() {
               },
               {
                 title: "Check your Dashboard",
-                color: "oklch(0.55 0.10 180)",
+                color: "#1565C0",
                 body: "After recording, your Dashboard updates automatically. Look at the Therapy Index gauge and the calendar green means things are going well, orange/red means there's more work to do.",
               },
               {
@@ -452,7 +452,7 @@ export default function GuidePage() {
               },
               {
                 title: "If a result says \"needs attention,\" book a doctor",
-                color: "oklch(0.62 0.15 42)",
+                color: "#FF9F43",
                 body: "The Dashboard and Exercises pages will both nudge you toward this. Go to Doctors, pick someone available, and tap Book Now.",
               },
               {
@@ -486,11 +486,11 @@ export default function GuidePage() {
               The 3 things we measure
             </div>
             <div style={{ display: "flex", flexDirection: "column" }}>
-              <TermRow color="#4ECDC4" term="Vocal Clarity"
+              <TermRow color="#1565C0" term="Vocal Clarity"
                 def="How clean and steady your voice sounds fewer breathy, strained, or shaky qualities." />
-              <TermRow color="#FFD93D" term="Speech Fluency"
+              <TermRow color="#0D9488" term="Speech Fluency"
                 def="How smoothly your words flow fewer unwanted pauses, repeats, or blocks." />
-              <TermRow color="#FF6B6B" term="Articulation"
+              <TermRow color="#FF9F43" term="Articulation"
                 def="How clearly each sound and word is formed and understood." />
             </div>
             <div style={{ fontSize: "0.78rem", color: D.textDim, marginTop: "0.7rem", lineHeight: 1.5 }}>
@@ -506,7 +506,7 @@ export default function GuidePage() {
               {[
                 { label: "70–100 · No concern",      color: D.low,  sub: "Within the normal recovery range" },
                 { label: "55–69 · Mild",              color: D.mid,  sub: "Keep doing your daily exercises" },
-                { label: "40–54 · Moderate",          color: "oklch(0.62 0.15 42)", sub: "Worth extra attention and monitoring" },
+                { label: "40–54 · Moderate",          color: "#FF9F43", sub: "Worth extra attention and monitoring" },
                 { label: "Below 40 · Needs attention", color: D.high, sub: "Consider booking a specialist soon" },
               ].map(row => (
                 <div key={row.label} style={{ display: "flex", alignItems: "center", gap: "0.65rem" }}>
@@ -547,9 +547,9 @@ export default function GuidePage() {
           }}>
             {[
               { icon: <Icons.Mic />, color: D.accent, label: "1. Record", text: "Open Analyze, read the passage aloud, stop and analyze." },
-              { icon: <Icons.Chart />, color: "oklch(0.55 0.10 180)", label: "2. Check", text: "Glance at your Dashboard gauge and today's square on the calendar." },
+              { icon: <Icons.Chart />, color: "#1565C0", label: "2. Check", text: "Glance at your Dashboard gauge and today's square on the calendar." },
               { icon: <Icons.Exercise />, color: D.low, label: "3. Practice", text: "Spend a few minutes on the exercises matched to your score." },
-              { icon: <Icons.Doctor />, color: "oklch(0.62 0.15 42)", label: "4. Get help", text: "If flagged, book time with a doctor on the Doctors page." },
+              { icon: <Icons.Doctor />, color: "#FF9F43", label: "4. Get help", text: "If flagged, book time with a doctor on the Doctors page." },
             ].map((s, i) => (
               <div key={i} style={{
                 display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center",
@@ -621,7 +621,7 @@ export default function GuidePage() {
 
         {/* ── Final CTA ── */}
         <Card style={{
-          textAlign: "center", background: D.accentSoft, border: `1px solid oklch(0.88 0.05 145)`,
+          textAlign: "center", background: D.accentSoft, border: "1px solid rgba(21,101,192,0.18)",
         }}>
           <div style={{ fontWeight: 700, color: D.accentInk, marginBottom: "0.4rem", fontSize: "1rem" }}>
             Ready to begin?

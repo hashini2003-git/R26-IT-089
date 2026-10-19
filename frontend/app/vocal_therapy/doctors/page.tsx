@@ -6,18 +6,18 @@ import { isLoggedIn } from "../../lib/auth";
 
 // Design tokens - Updated to match NavBar/SideBar green color scheme
 const D = {
-  bg:         "oklch(0.985 0.004 150)",
+  bg:         "#F4F8FD",
   surface:    "#ffffff",
-  border:     "oklch(0.92 0.01 145)",
-  borderStrong: "oklch(0.86 0.015 145)",
-  text:       "oklch(0.22 0.015 150)",
-  textMuted:  "oklch(0.50 0.015 150)",
-  textDim:    "oklch(0.62 0.012 150)",
-  accent:     "oklch(0.62 0.14 150)",
-  accentSoft: "oklch(0.96 0.03 150)",
-  accentInk:  "oklch(0.38 0.08 150)",
-  low:        "oklch(0.62 0.13 160)",
-  lowSoft:    "oklch(0.95 0.04 160)",
+  border:     "rgba(21,101,192,0.10)",
+  borderStrong: "rgba(21,101,192,0.18)",
+  text:       "#0F2137",
+  textMuted:  "#4A6070",
+  textDim:    "#60758A",
+  accent:     "#0D9488",
+  accentSoft: "#E0F5F3",
+  accentInk:  "#0B7A70",
+  low:        "#2ECC91",
+  lowSoft:    "#E8F8F0",
   shadow:     "0 1px 3px rgba(15,32,60,0.06), 0 1px 0 rgba(15,32,60,0.02)",
   shadowMd:   "0 4px 16px rgba(15,32,60,0.07)",
   fontMono:   "'JetBrains Mono', ui-monospace, monospace",
@@ -180,7 +180,7 @@ const doctors: Doctor[] = [
 function DoctorCard({ doctor }: { doctor: Doctor }) {
   const availabilityColor = {
     available: D.low,
-    busy: "oklch(0.62 0.15 42)",
+    busy: "#FF9F43",
     away: D.textDim,
   };
 
@@ -192,7 +192,7 @@ function DoctorCard({ doctor }: { doctor: Doctor }) {
 
   const availabilityBg = {
     available: D.lowSoft,
-    busy: "oklch(0.96 0.04 42)",
+    busy: "#FFF0E2",
     away: D.bg,
   };
 
@@ -208,14 +208,14 @@ function DoctorCard({ doctor }: { doctor: Doctor }) {
   // Generate placeholder avatar color based on name
   const getAvatarColor = (name: string) => {
     const colors = [
-      "oklch(0.62 0.14 150)",
-      "oklch(0.55 0.10 180)",
-      "oklch(0.55 0.10 260)",
-      "oklch(0.55 0.10 140)",
-      "oklch(0.55 0.10 300)",
-      "oklch(0.55 0.10 30)",
-      "oklch(0.55 0.10 80)",
-      "oklch(0.55 0.10 340)",
+      "#0D9488",
+      "#1565C0",
+      "#0D9488",
+      "#1565C0",
+      "#0D9488",
+      "#1565C0",
+      "#0D9488",
+      "#1565C0",
     ];
     let hash = 0;
     for (let i = 0; i < name.length; i++) {

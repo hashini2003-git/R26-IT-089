@@ -455,8 +455,8 @@ function DashboardContent({ result, visits }: { result: IpeResult | null; visits
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 22 }}>
         {[
           { label: "New Scan", sub: "Upload & analyze", Icon: Camera, color: BLUE, href: "/Component1/upload" },
-          { label: "AI Assistant", sub: "Get guidance", Icon: MessageSquare, color: "#F59E0B", href: "/Component1/assistant" },
-          { label: "Progress", sub: "Track recovery", Icon: TrendingUp, color: "#8B5CF6", href: "/Component1/progress" },
+          { label: "AI Assistant", sub: "Get guidance", Icon: MessageSquare, color: MINT, href: "/Component1/assistant" },
+          { label: "Progress", sub: "Track recovery", Icon: TrendingUp, color: BLUE, href: "/Component1/progress" },
           { label: "Before & After", sub: "Visual compare", Icon: GitCompare, color: MINT, href: "/Component1/compare" },
         ].map(({ label, sub, Icon, color, href }) => (
           <button key={href} onClick={() => router.push(href)}

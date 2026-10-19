@@ -1,17 +1,18 @@
 .app {
-  --navy: #0f2137;
+  --navy: #0b1f38;
   --blue: #1565c0;
+  --blue-deep: #0d47a1;
+  --blue-tint: #e3eef9;
   --teal: #0d9488;
   --teal-soft: #e0f5f3;
-  --lavender: #8b7fd1;
-  --lavender-soft: #edebfa;
-  --yellow: #f3b634;
-  --background: #f3f7fb;
+  --yellow: #f5c242;
+  --background: #f4f8fd;
   --surface: #ffffff;
-  --border: #dce6ef;
-  --muted: #607286;
+  --text: #0f2137;
+  --border: rgba(21, 101, 192, 0.10);
+  --muted: #4a6070;
   min-height: 100dvh;
-  color: var(--navy);
+  color: var(--text);
   background: var(--background);
   font-family: var(--font-oc-sans), "DM Sans", system-ui, sans-serif;
 }
@@ -44,7 +45,7 @@
   align-items: center;
   justify-content: center;
   color: var(--navy);
-  background: #eef4fa;
+  background: var(--blue-tint);
   border: 1px solid var(--border);
   border-radius: 8px;
   cursor: pointer;
@@ -62,7 +63,7 @@
   align-items: center;
   justify-content: center;
   color: white;
-  background: var(--teal);
+  background: var(--blue);
   border-radius: 8px;
 }
 
@@ -94,7 +95,7 @@
   gap: 7px;
   padding: 7px 11px;
   color: var(--blue);
-  background: #e3eef9;
+  background: var(--blue-tint);
   border: 1px solid #c8dcf0;
   border-radius: 8px;
   font-size: 13px;
@@ -121,9 +122,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--lavender);
-  background: var(--lavender-soft);
-  border: 1px solid #d9d4f4;
+  color: var(--blue);
+  background: var(--blue-tint);
+  border: 1px solid #c8dcf0;
   border-radius: 8px;
 }
 
@@ -230,9 +231,9 @@
 
 .primaryButton {
   color: white;
-  background: var(--teal);
-  border: 1px solid var(--teal);
-  box-shadow: 0 5px 14px rgba(13, 148, 136, 0.22);
+  background: var(--blue);
+  border: 1px solid var(--blue);
+  box-shadow: 0 5px 14px rgba(21, 101, 192, 0.22);
 }
 
 .secondaryButton {
@@ -247,11 +248,11 @@
 }
 
 .primaryButton:hover:not(:disabled) {
-  background: #0a7d73;
+  background: var(--blue-deep);
 }
 
 .secondaryButton:hover:not(:disabled) {
-  background: #edf5fc;
+  background: var(--blue-tint);
 }
 
 .primaryButton:disabled,
@@ -273,7 +274,7 @@
   align-items: center;
   gap: 4px 10px;
   padding: 20px;
-  color: var(--lavender);
+  color: var(--blue);
 }
 
 .summaryMetric + .summaryMetric {
@@ -298,8 +299,8 @@
   justify-content: space-between;
   gap: 24px;
   padding: 22px 25px;
-  background: var(--teal-soft);
-  border: 1px solid #bce6df;
+  background: var(--blue-tint);
+  border: 1px solid #c8dcf0;
   border-radius: 8px;
 }
 
@@ -346,12 +347,12 @@
 
 .progressSegment {
   height: 5px;
-  background: #d6e0ea;
+  background: #D8E3EE;
   border-radius: 5px;
 }
 
 .progressSegmentActive {
-  background: var(--teal);
+  background: var(--blue);
 }
 
 .wizardHeading {
@@ -386,9 +387,9 @@
 }
 
 .optionButtonSelected {
-  background: #f2fbf9;
-  border-color: var(--teal);
-  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+  background: var(--blue-tint);
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.1);
 }
 
 .optionIcon {
@@ -397,8 +398,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--lavender);
-  background: var(--lavender-soft);
+  color: var(--blue);
+  background: var(--blue-tint);
   border-radius: 8px;
 }
 
@@ -472,7 +473,7 @@
   width: 42px;
   height: 42px;
   border: 4px solid #dbe6f0;
-  border-top-color: var(--teal);
+  border-top-color: var(--blue);
   border-radius: 50%;
   animation: meditationSpin 900ms linear infinite;
 }
@@ -519,7 +520,7 @@
   align-items: center;
   justify-content: center;
   color: var(--navy);
-  background: #bfe8e1;
+  background: var(--teal-soft);
   border-radius: 8px;
 }
 
@@ -543,7 +544,7 @@
 }
 
 .confidence strong {
-  color: #83d6c9;
+  color: #90caf9;
   font-size: 25px;
 }
 
@@ -563,7 +564,7 @@
 }
 
 .detailItem svg {
-  color: var(--lavender);
+  color: var(--blue);
 }
 
 .detailItem span {
@@ -637,7 +638,7 @@
   align-items: center;
   justify-content: center;
   color: var(--navy);
-  background: #9edfd4;
+  background: var(--teal-soft);
   border-radius: 8px;
 }
 
@@ -665,7 +666,7 @@
 
 .sessionTimer {
   min-width: 64px;
-  color: #83d6c9;
+  color: #90caf9;
   font-family: var(--font-oc-mono), monospace;
   font-size: 15px;
   font-weight: 700;
@@ -747,7 +748,7 @@
   align-items: center;
   justify-content: center;
   color: var(--muted);
-  background: #eef4fa;
+  background: var(--blue-tint);
   border: 1px solid var(--border);
   border-radius: 8px;
   cursor: pointer;
@@ -804,8 +805,8 @@
   margin-right: 3px;
   padding: 3px 5px;
   color: var(--navy);
-  background: #eef4fa;
-  border: 1px solid #c9d7e5;
+  background: var(--blue-tint);
+  border: 1px solid #D8E3EE;
   border-bottom-width: 2px;
   border-radius: 5px;
   font-family: var(--font-oc-mono), monospace;
@@ -936,8 +937,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--lavender);
-  background: var(--lavender-soft);
+  color: var(--blue);
+  background: var(--blue-tint);
   border-radius: 8px;
 }
 

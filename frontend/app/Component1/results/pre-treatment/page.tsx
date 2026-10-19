@@ -64,15 +64,32 @@ function ActivityIllustration({ activity, playing }: { activity: LightActivity; 
   }
   return (
     <div className={`${styles.illustration} ${playing ? styles.activityPlaying : ""}`}>
-      <svg viewBox="0 0 240 190" role="img" aria-label="Animated illustration of a person walking gently">
+      <svg viewBox="0 0 240 190" role="img" aria-label="Side view illustration of a person walking gently">
         <path d="M34 157h172" stroke="#B6D2E5" strokeWidth="5" strokeLinecap="round" />
         <g className={styles.walker}>
-          <circle cx="120" cy="43" r="18" fill="#F4D6C3" stroke="#7A9AB1" strokeWidth="3" />
-          <path d="M113 64h14l13 47h-40z" fill="#0D9488" />
-          <path className={styles.walkArmLeft} d="M102 74 85 103" fill="none" stroke="#7A9AB1" strokeWidth="8" strokeLinecap="round" />
-          <path className={styles.walkArmRight} d="m138 74 17 29" fill="none" stroke="#7A9AB1" strokeWidth="8" strokeLinecap="round" />
-          <path className={styles.walkLegLeft} d="m108 110-10 43" fill="none" stroke="#233D59" strokeWidth="9" strokeLinecap="round" />
-          <path className={styles.walkLegRight} d="m132 110 10 43" fill="none" stroke="#233D59" strokeWidth="9" strokeLinecap="round" />
+          <g className={styles.walkLegLeft} fill="none" stroke="#233D59" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m117 105-8 24" />
+            <g className={styles.walkShinLeft}>
+              <path d="m109 129-12 21-12 2" />
+            </g>
+          </g>
+          <g className={styles.walkLegRight} fill="none" stroke="#354E62" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m123 105 9 24" />
+            <g className={styles.walkShinRight}>
+              <path d="m132 129 13 20 12 1" />
+            </g>
+          </g>
+          <path d="M110 64q12-5 23 2l7 41q-18 8-37 0l4-34z" fill="#0D9488" />
+          <g className={styles.walkArmLeft} fill="none" stroke="#8DB2CC" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m111 70-10 17 5 13" />
+          </g>
+          <g className={styles.walkArmRight} fill="none" stroke="#7A9AB1" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m132 70 11 16-5 14" />
+          </g>
+          <path d="M108 43c-2-13 5-23 16-23 12 0 19 9 17 21l-2 13c-2 9-8 14-17 13-9-1-14-8-14-17z" fill="#F4D6C3" stroke="#7A9AB1" strokeWidth="2.5" />
+          <path d="M108 43c-1-14 6-24 18-24 10 0 17 6 18 17-5-1-8-5-10-9-6 5-15 7-25 7z" fill="#233D59" />
+          <path d="m139 45 7 3-7 3" fill="#F4D6C3" stroke="#7A9AB1" strokeWidth="2" strokeLinejoin="round" />
+          <circle cx="136" cy="42" r="1.8" fill="#233D59" />
         </g>
       </svg>
       <div className={styles.motionLabel}>{playing ? "Move at a comfortable pace" : "Activity paused"}</div>

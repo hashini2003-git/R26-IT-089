@@ -9,28 +9,28 @@ import {
 
 /* ───────────────────────────────────────────────────────────────────────────
    IPE Design System
-   "Liquid glass" — frosted translucent panels over a calm mint/lavender
+   "Liquid glass" — frosted translucent panels over a calm blue/teal
    gradient. Warm-but-not-alarming severity scale (avoids harsh pure red,
    since this is a chronic-illness patient-facing app).
 ─────────────────────────────────────────────────────────────────────────── */
 
 export const C = {
-  bgTop:      "#EAF6F3",
-  bgBottom:   "#F1EEFB",
+  bgTop:      "#F4F8FD",
+  bgBottom:   "#F4F8FD",
   glass:      "rgba(255,255,255,0.60)",
   glassEdge:  "rgba(255,255,255,0.85)",
-  ink:        "#153238",
-  inkMuted:   "#5B7A80",
-  inkFaint:   "#93ACAF",
-  ink3:       "#5B7A80",   // alias of inkMuted, used by newer pages
-  teal:       "#159E92",
-  tealSoft:   "#DFF4F1",
-  tealLight:  "#DFF4F1",   // alias of tealSoft
-  tealDark:   "#0E5C54",
+  ink:        "#0F2137",
+  inkMuted:   "#4A6070",
+  inkFaint:   "#60758A",
+  ink3:       "#4A6070",   // alias of inkMuted, used by newer pages
+  teal:       "#0D9488",
+  tealSoft:   "#E0F5F3",
+  tealLight:  "#E0F5F3",   // alias of tealSoft
+  tealDark:   "#0B7A70",
   bgWhite:    "#FFFFFF",
-  lavender:   "#8B7FD1",
+  blue:       "#1565C0",
   // severity scale, calm → critical
-  sev: ["#2ECC91", "#F5C242", "#FF9F43", "#FF6B5B", "#E8483A"],
+  sev: ["#2ECC91", "#F5C242", "#FF9F43", "#E8483A", "#E8483A"],
 };
 
 export function severityColor(v: number) {
@@ -481,8 +481,8 @@ export function Hero({
   return (
     <div style={{
       borderRadius: 28, padding: "26px 22px",
-      background: `linear-gradient(155deg, #0E5C54 0%, #159E92 55%, #1FB5A8 100%)`,
-      boxShadow: "0 16px 40px rgba(14,92,84,0.35)",
+      background: `linear-gradient(135deg, ${C.ink} 0%, ${C.blue} 62%, ${C.teal} 100%)`,
+      boxShadow: "0 16px 40px rgba(21,101,192,0.22)",
       position: "relative", overflow: "hidden", color: "#fff",
     }}>
       {/* soft decorative glow, matches reference gradient depth */}

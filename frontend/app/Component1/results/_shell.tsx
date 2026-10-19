@@ -20,10 +20,10 @@ export const SIDEBAR_BG = "#0B1F38";
 export const TEXT = "#0F2137";
 export const TEXT2 = "#4A6070";
 /* Severity palette — bold, clearly distinct so adjacent tiers never look alike */
-export const SEV_GREEN = "#22C55E";   // Normal
-export const SEV_YELLOW = "#FACC15";  // Mild Concern
-export const SEV_ORANGE = "#F97316";  // See Doctor Soon
-export const SEV_RED = "#EF4444";     // Urgent
+export const SEV_GREEN = "#2ECC91";   // Normal
+export const SEV_YELLOW = "#F5C242";  // Mild Concern
+export const SEV_ORANGE = "#FF9F43";  // See Doctor Soon
+export const SEV_RED = "#E8483A";     // Urgent
 export const SEV = [SEV_GREEN, SEV_YELLOW, SEV_ORANGE, SEV_RED];
 export const FONT = "'Inter', system-ui, sans-serif";
 export const SERIF = "'DM Serif Display', Georgia, serif";

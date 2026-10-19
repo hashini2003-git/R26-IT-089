@@ -21,7 +21,7 @@ export default function TreatmentDetail() {
   const tiers: { title: string; Icon: typeof AlertTriangle; items: string[]; color: string; bg: string }[] = [
     { title: "Do now", Icon: AlertTriangle, items: result.treatment_plan.immediate, color: "#E8483A", bg: "#FDEDEB" },
     { title: "This week", Icon: Clock, items: result.treatment_plan.short_term, color: "#FF9F43", bg: "#FFF3E4" },
-    { title: "Clinical", Icon: Stethoscope, items: result.treatment_plan.clinical, color: "#8B7FD1", bg: "#EFEDFB" },
+    { title: "Clinical", Icon: Stethoscope, items: result.treatment_plan.clinical, color: "#1565C0", bg: "#E3EEF9" },
     { title: "Lifestyle", Icon: Heart, items: result.treatment_plan.lifestyle, color: "#2ECC91", bg: "#E9F9F2" },
   ];
 

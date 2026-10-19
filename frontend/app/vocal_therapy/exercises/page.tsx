@@ -9,25 +9,25 @@ import type { Session, AnalysisResult, ModelScore, SentimentResult } from "../..
 
 // Design tokens - Updated to match NavBar/SideBar green color scheme
 const D = {
-  bg:         "oklch(0.985 0.004 150)",
+  bg:         "#F4F8FD",
   surface:    "#ffffff",
-  border:     "oklch(0.92 0.01 145)",
-  borderStrong: "oklch(0.86 0.015 145)",
-  text:       "oklch(0.22 0.015 150)",
-  textMuted:  "oklch(0.50 0.015 150)",
-  textDim:    "oklch(0.62 0.012 150)",
-  accent:     "oklch(0.62 0.14 150)",
-  accentSoft: "oklch(0.96 0.03 150)",
-  accentInk:  "oklch(0.38 0.08 150)",
-  low:        "oklch(0.62 0.13 160)",
-  lowSoft:    "oklch(0.95 0.04 160)",
-  lowInk:     "oklch(0.40 0.10 160)",
-  mid:        "oklch(0.72 0.13 80)",
-  midSoft:    "oklch(0.96 0.05 85)",
-  midInk:     "oklch(0.42 0.10 70)",
-  high:       "oklch(0.62 0.16 25)",
-  highSoft:   "oklch(0.95 0.04 25)",
-  highInk:    "oklch(0.42 0.13 25)",
+  border:     "rgba(21,101,192,0.10)",
+  borderStrong: "rgba(21,101,192,0.18)",
+  text:       "#0F2137",
+  textMuted:  "#4A6070",
+  textDim:    "#60758A",
+  accent:     "#0D9488",
+  accentSoft: "#E0F5F3",
+  accentInk:  "#0B7A70",
+  low:        "#2ECC91",
+  lowSoft:    "#E8F8F0",
+  lowInk:     "#08735E",
+  mid:        "#F5C242",
+  midSoft:    "#FFF7DA",
+  midInk:     "#8A5A00",
+  high:       "#E8483A",
+  highSoft:   "#FDEDEB",
+  highInk:    "#B42318",
   shadow:     "0 1px 3px rgba(15,32,60,0.06), 0 1px 0 rgba(15,32,60,0.02)",
   shadowMd:   "0 4px 16px rgba(15,32,60,0.07)",
   fontMono:   "'JetBrains Mono', ui-monospace, monospace",
@@ -173,21 +173,21 @@ const SEV_LABEL: Record<string, string> = {
 const SEV_COLOR: Record<string, string> = {
   none:     D.low,
   mild:     D.mid,
-  moderate: "oklch(0.62 0.15 42)",
+  moderate: "#FF9F43",
   severe:   D.high,
 };
 
 const VERDICT_SOFT: Record<string, string> = {
   none:     D.lowSoft, mild: D.midSoft,
-  moderate: "oklch(0.96 0.04 42)", severe: D.highSoft,
+  moderate: "#FFF0E2", severe: D.highSoft,
 };
 const VERDICT_INK: Record<string, string> = {
   none: D.lowInk, mild: D.midInk,
-  moderate: "oklch(0.42 0.12 42)", severe: D.highInk,
+  moderate: "#A34205", severe: D.highInk,
 };
 const VERDICT_BORDER: Record<string, string> = {
-  none: "oklch(0.85 0.08 160)", mild: "oklch(0.85 0.08 80)",
-  moderate: "oklch(0.82 0.10 42)", severe: "oklch(0.85 0.08 25)",
+  none: "#B7E8D0", mild: "#F1D98E",
+  moderate: "#FFD0A3", severe: "#F2B6B0",
 };
 const VERDICT_DESC: Record<string, string> = {
   none:     "Speech is within the normal recovery range. Excellent progress.",
@@ -212,9 +212,9 @@ const PROB_BARS = [
 ];
 
 const MOOD_CFG = {
-  positive: { icon: "😊", label: "Feeling Positive",  bg: D.lowSoft,  color: D.lowInk,  border: "oklch(0.85 0.08 160)" },
+  positive: { icon: "😊", label: "Feeling Positive",  bg: D.lowSoft,  color: D.lowInk,  border: "#B7E8D0" },
   neutral:  { icon: "😐", label: "Feeling Neutral",   bg: D.bg,       color: D.textMuted, border: D.border },
-  negative: { icon: "😔", label: "Feeling Down",      bg: D.highSoft, color: D.highInk, border: "oklch(0.85 0.08 25)" },
+  negative: { icon: "😔", label: "Feeling Down",      bg: D.highSoft, color: D.highInk, border: "#F2B6B0" },
 } as const;
 
 function MoodModelBadge({ score }: { score: ModelScore }) {
@@ -469,7 +469,7 @@ function ScoreDashboard({
       {savedSession && (
         <div style={{
           background: isImprovement ? D.lowSoft : isDecline ? D.highSoft : D.bg,
-          border: `1px solid ${isImprovement ? "oklch(0.85 0.08 160)" : isDecline ? "oklch(0.85 0.08 25)" : D.border}`,
+          border: `1px solid ${isImprovement ? "#B7E8D0" : isDecline ? "#F2B6B0" : D.border}`,
           borderRadius:12,
           padding:"1rem 1.25rem",
         }}>
@@ -515,7 +515,7 @@ function ScoreDashboard({
           <div style={{
             padding:"1.1rem 1.25rem", borderRadius:12,
             background: isHealthy ? D.lowSoft : (band(currentOverallScore) === "high" ? D.highSoft : D.midSoft),
-            border:`1px solid ${isHealthy ? "oklch(0.85 0.08 160)" : "oklch(0.88 0.08 80)"}`,
+            border:`1px solid ${isHealthy ? "#B7E8D0" : "#F1D98E"}`,
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10 }}>
               <span style={{ fontSize:"1.4rem" }}>
@@ -582,7 +582,7 @@ function ScoreDashboard({
               
               return (
                 <div key={key} style={{
-                  background: active ? "oklch(0.22 0.015 150)" : D.surface,
+                  background: active ? "#0B1F38" : D.surface,
                   borderRadius:12, padding:"1.1rem",
                   border: active ? "none" : `1px solid ${D.border}`,
                   boxShadow: active ? D.shadowMd : D.shadow, textAlign:"center",

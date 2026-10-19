@@ -9,24 +9,24 @@ import type { ProgressPoint, Session } from "../../lib/types";
 
 // ── Design tokens - Updated to match NavBar/SideBar green color scheme ──
 const D = {
-  bg:         "oklch(0.985 0.004 150)",
+  bg:         "#F4F8FD",
   surface:    "#ffffff",
-  border:     "oklch(0.92 0.01 145)",
-  text:       "oklch(0.22 0.015 150)",
-  textMuted:  "oklch(0.50 0.015 150)",
-  textDim:    "oklch(0.62 0.012 150)",
-  accent:     "oklch(0.62 0.14 150)",
-  accentSoft: "oklch(0.96 0.03 150)",
-  accentInk:  "oklch(0.38 0.08 150)",
-  low:        "oklch(0.62 0.13 160)",
-  lowSoft:    "oklch(0.95 0.04 160)",
-  lowInk:     "oklch(0.40 0.10 160)",
-  mid:        "oklch(0.72 0.13 80)",
-  midSoft:    "oklch(0.96 0.05 85)",
-  midInk:     "oklch(0.42 0.10 70)",
-  high:       "oklch(0.62 0.16 25)",
-  highSoft:   "oklch(0.95 0.04 25)",
-  highInk:    "oklch(0.42 0.13 25)",
+  border:     "rgba(21,101,192,0.10)",
+  text:       "#0F2137",
+  textMuted:  "#4A6070",
+  textDim:    "#60758A",
+  accent:     "#0D9488",
+  accentSoft: "#E0F5F3",
+  accentInk:  "#0B7A70",
+  low:        "#2ECC91",
+  lowSoft:    "#E8F8F0",
+  lowInk:     "#08735E",
+  mid:        "#F5C242",
+  midSoft:    "#FFF7DA",
+  midInk:     "#8A5A00",
+  high:       "#E8483A",
+  highSoft:   "#FDEDEB",
+  highInk:    "#B42318",
   shadow:     "0 1px 3px rgba(15,32,60,0.06), 0 1px 0 rgba(15,32,60,0.02)",
   fontMono:   "'JetBrains Mono', ui-monospace, monospace",
   breakpoints: { mobile: 640, tablet: 768, desktop: 960 },
@@ -181,12 +181,12 @@ const Icons = {
 };
 
 const METRIC_COLORS = [
-  "oklch(0.62 0.13 160)",
-  "oklch(0.55 0.10 180)",
-  "oklch(0.62 0.14 150)",
+  "#1565C0",
+  "#0D9488",
+  "#FF9F43",
 ];
 
-const LOCAL_METRIC_COLORS = ["#4ECDC4", "#FFD93D", "#FF6B6B"];
+const LOCAL_METRIC_COLORS = ["#1565C0", "#0D9488", "#FF9F43"];
 
 const METRICS = [
   { key: "vocal_clarity" as const, probKey: "vocal_clarity_prob" as const, label: "Vocal Clarity",  color: LOCAL_METRIC_COLORS[0] },
@@ -424,7 +424,7 @@ const SEV_LABEL: Record<string, string> = {
 const SEV_COLOR: Record<string, string> = {
   none:     D.low,
   mild:     D.mid,
-  moderate: "oklch(0.62 0.15 42)",
+  moderate: "#FF9F43",
   severe:   D.high,
 };
 
@@ -464,7 +464,7 @@ function CalendarHeatmap({ sessions, dayNumber }: { sessions: Session[]; dayNumb
           const future = day > dayNumber;
           const missed = !future && sev === undefined;
           const bg = future
-            ? "oklch(0.96 0.003 150)"
+            ? "#F4F8FD"
             : missed
             ? D.border
             : SEV_COLOR[sev!];
@@ -529,7 +529,7 @@ function TrendChart({ data }: { data: ProgressPoint[] }) {
         {yTicks.map(v => (
           <g key={v}>
             <line x1={0} y1={yPx(v)} x2={cW} y2={yPx(v)}
-              stroke={v === 50 ? "oklch(0.82 0.008 150)" : D.border}
+              stroke={v === 50 ? "#D9E6F3" : D.border}
               strokeWidth={v === 50 ? 1.5 : 1} strokeDasharray={v === 50 ? "4 3" : "0"} />
             <text x={-8} y={yPx(v) + 4} textAnchor="end" fontSize={isMobile ? 8 : 10} fill={D.textDim}
               fontFamily={D.fontMono}>{v}%</text>
@@ -543,7 +543,7 @@ function TrendChart({ data }: { data: ProgressPoint[] }) {
           <>
             <line x1={xPx(data[data.length - 1].day_number)} y1={0}
                   x2={xPx(data[data.length - 1].day_number)} y2={cH}
-                  stroke="oklch(0.82 0.008 150)" strokeWidth={1.5} strokeDasharray="3 2" />
+                  stroke="#D9E6F3" strokeWidth={1.5} strokeDasharray="3 2" />
             <text x={xPx(data[data.length - 1].day_number)} y={-4}
                   textAnchor="middle" fontSize={isMobile ? 7 : 9} fill={D.textDim}>today</text>
           </>
@@ -940,7 +940,7 @@ function AIRecommendationsPanel({ recommendations }: { recommendations: AIRecomm
   const sorted = [...recommendations].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
 
   return (
-    <Card style={{ background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)" }}>
+    <Card style={{ background: "linear-gradient(135deg, #1565C015 0%, #0D948815 100%)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
         <SectionLabel>Recommendations</SectionLabel>
       </div>
@@ -1242,7 +1242,7 @@ function AIChatbot({ sessions, latestScore, trend }: {
           {/* Header */}
           <div style={{
             padding: "1rem 1.25rem",
-            background: `linear-gradient(135deg, oklch(0.22 0.14 160) 0%, ${D.accent} 100%)`,
+            background: "linear-gradient(135deg, #0B1F38 0%, #0D9488 100%)",
             color: "#fff",
             display: "flex",
             justifyContent: "space-between",
@@ -1552,10 +1552,10 @@ function generateReportHTML(
 
   const SEV_RANK: Record<string, number> = { none: 0, mild: 1, moderate: 2, severe: 3 };
   const SEV_META: Record<string, { label: string; bg: string; color: string; bar: string; desc: string }> = {
-    none:     { label: "No concern",     bg: "#dcfce7", color: "#15803d", bar: "#16a34a", desc: "Speech is within the normal recovery range. Excellent progress." },
-    mild:     { label: "Mild",           bg: "#fef3c7", color: "#92400e", bar: "#d97706", desc: "Mild vocal concern remains. Continue therapy exercises as advised." },
-    moderate: { label: "Moderate",       bg: "#fed7aa", color: "#9a3412", bar: "#ea580c", desc: "Moderate speech concern. Continued clinical monitoring is recommended." },
-    severe:   { label: "Needs attention",bg: "#fee2e2", color: "#991b1b", bar: "#dc2626", desc: "Significant vocal concern. Urgent clinical review is recommended." },
+    none:     { label: "No concern",     bg: "#E8F8F0", color: "#08735E", bar: "#2ECC91", desc: "Speech is within the normal recovery range. Excellent progress." },
+    mild:     { label: "Mild",           bg: "#FFF7DA", color: "#8A5A00", bar: "#F5C242", desc: "Mild vocal concern remains. Continue therapy exercises as advised." },
+    moderate: { label: "Moderate",       bg: "#FFF0E2", color: "#A34205", bar: "#FF9F43", desc: "Moderate speech concern. Continued clinical monitoring is recommended." },
+    severe:   { label: "Needs attention",bg: "#FDEDEB", color: "#B42318", bar: "#E8483A", desc: "Significant vocal concern. Urgent clinical review is recommended." },
   };
 
   function dominantSev(subset: Session[]): string {
@@ -1575,7 +1575,7 @@ function generateReportHTML(
                         : rankDiff === 1 ? "Moderate improvement"
                         : rankDiff === 0 ? "Stable — no change"
                         : "Regression noted — clinical review advised";
-  const trendColor      = rankDiff > 0 ? "#15803d" : rankDiff === 0 ? "#64748b" : "#dc2626";
+  const trendColor      = rankDiff > 0 ? "#08735E" : rankDiff === 0 ? "#60758A" : "#B42318";
 
   const totalSessions = sessions.length;
   const healthyCount  = sessions.filter(s => s.is_healthy).length;
@@ -1606,8 +1606,8 @@ function generateReportHTML(
   sessions.forEach(s => { if (s.severity_label in sevCounts) sevCounts[s.severity_label]++; });
 
   const weekTableRows = weeks.map(w => {
-    if (w.avg === null) return `<tr><td style="font-weight:600">${w.short}</td><td colspan="5" style="color:#94a3b8">No data recorded</td></tr>`;
-    const colFn = (v: number) => v >= 70 ? "#16a34a" : v >= 40 ? "#d97706" : "#dc2626";
+    if (w.avg === null) return `<tr><td style="font-weight:600">${w.short}</td><td colspan="5" style="color:#60758A">No data recorded</td></tr>`;
+    const colFn = (v: number) => v >= 70 ? "#2ECC91" : v >= 40 ? "#F5C242" : "#E8483A";
     const sev   = SEV_META[w.sevKey];
     return `<tr>
       <td style="font-weight:600">${w.short}</td>
@@ -1622,8 +1622,8 @@ function generateReportHTML(
   const progressBars = weeks.map((w, i) => {
     if (w.avg === null) return `
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
-        <div style="width:60px;font-size:11px;font-weight:700;color:#94a3b8">${w.label}</div>
-        <div style="flex:1;background:#f1f5f9;border-radius:6px;height:32px;display:flex;align-items:center;padding-left:12px">
+        <div style="width:60px;font-size:11px;font-weight:700;color:#60758A">${w.label}</div>
+        <div style="flex:1;background:#F4F8FD;border-radius:6px;height:32px;display:flex;align-items:center;padding-left:12px">
           <span style="font-size:11px;color:#cbd5e1">No data</span>
         </div>
       </div>`;
@@ -1631,11 +1631,11 @@ function generateReportHTML(
     const arrow    = i > 0 && weeks[i-1].avg !== null
       ? (w.avg > weeks[i-1].avg! ? " ↑" : w.avg < weeks[i-1].avg! ? " ↓" : " →")
       : "";
-    const arrowCol = arrow === " ↑" ? "#16a34a" : arrow === " ↓" ? "#dc2626" : "#64748b";
+    const arrowCol = arrow === " ↑" ? "#2ECC91" : arrow === " ↓" ? "#E8483A" : "#60758A";
     return `
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
         <div style="width:60px;font-size:11px;font-weight:700;color:#475569">${w.label}</div>
-        <div style="flex:1;background:#f1f5f9;border-radius:6px;height:32px;overflow:hidden;position:relative">
+        <div style="flex:1;background:#F4F8FD;border-radius:6px;height:32px;overflow:hidden;position:relative">
           <div style="height:100%;width:${w.avg}%;background:${sev.bar};border-radius:6px;display:flex;align-items:center;padding:0 12px;min-width:48px">
             <span style="font-size:12px;font-weight:800;color:#fff;font-family:monospace">${w.avg}</span>
           </div>
@@ -1654,7 +1654,7 @@ function generateReportHTML(
       <td><span style="background:${bg};color:${color};padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700">${label}</span></td>
       <td style="font-family:monospace;font-weight:700">${count}</td>
       <td style="font-family:monospace">${pct}%</td>
-      <td><div style="background:#e2e8f0;border-radius:4px;height:8px;width:180px;overflow:hidden"><div style="height:100%;border-radius:4px;background:${bar};width:${pct}%"></div></div></td>
+      <td><div style="background:#D9E6F3;border-radius:4px;height:8px;width:180px;overflow:hidden"><div style="height:100%;border-radius:4px;background:${bar};width:${pct}%"></div></div></td>
     </tr>`;
   }).join("");
 
@@ -1666,13 +1666,13 @@ function generateReportHTML(
 <title>Vocal Therapy — 30-Day Recovery Report — ${name}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1a2340;background:#fff;font-size:13px;line-height:1.5}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#0F2137;background:#fff;font-size:13px;line-height:1.5}
   .page{max-width:820px;margin:0 auto;padding:44px}
-  h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin:0 0 12px;padding-bottom:6px;border-bottom:1px solid #e2e8f0}
+  h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#4A6070;margin:0 0 12px;padding-bottom:6px;border-bottom:1px solid #D9E6F3}
   .section{margin-bottom:28px}
   table{width:100%;border-collapse:collapse;font-size:12px}
-  th{text-align:left;padding:7px 10px;background:#f1f5f9;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b}
-  td{padding:6px 10px;border-bottom:1px solid #f1f5f9}
+  th{text-align:left;padding:7px 10px;background:#E3EEF9;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#4A6070}
+  td{padding:6px 10px;border-bottom:1px solid #D9E6F3}
   tr:last-child td{border-bottom:none}
   @media (max-width: 640px) {
     .page{padding:20px}
@@ -1687,20 +1687,20 @@ function generateReportHTML(
 <div class="page">
 
   <!-- Header -->
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1a2340;padding-bottom:18px;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0B1F38;padding-bottom:18px;margin-bottom:24px;flex-wrap:wrap;gap:12px">
     <div>
-      <div style="font-size:22px;font-weight:800;color:#1a2340;letter-spacing:-.02em">Vocal<span style="color:#16a34a">Therapy</span></div>
-      <div style="font-size:11px;color:#64748b;margin-top:3px">AI Speech Recovery Platform</div>
+      <div style="font-size:22px;font-weight:800;color:#0B1F38;letter-spacing:-.02em">Vocal<span style="color:#0D9488">Therapy</span></div>
+      <div style="font-size:11px;color:#4A6070;margin-top:3px">AI Speech Recovery Platform</div>
     </div>
-    <div style="text-align:right;font-size:11px;color:#64748b">
-      <div style="font-weight:700;font-size:13px;color:#1a2340">30-Day Recovery Report</div>
+    <div style="text-align:right;font-size:11px;color:#4A6070">
+      <div style="font-weight:700;font-size:13px;color:#0B1F38">30-Day Recovery Report</div>
       <div>Generated: ${now}</div>
       <div>Confidential — Clinical use only</div>
     </div>
   </div>
 
   <!-- Patient banner -->
-  <div style="background:linear-gradient(135deg,#1e293b 0%,#16a34a 100%);color:#fff;border-radius:12px;padding:20px 24px;margin-bottom:20px">
+  <div style="background:linear-gradient(135deg,#0B1F38 0%,#0D9488 100%);color:#fff;border-radius:12px;padding:20px 24px;margin-bottom:20px">
     <div style="font-size:21px;font-weight:700;margin-bottom:5px">${name}</div>
     <div style="opacity:.75;font-size:12px;display:flex;gap:22px;flex-wrap:wrap">
       <span> Surgery: ${surgeryDate || "—"}</span>
@@ -1721,15 +1721,15 @@ function generateReportHTML(
     <div style="font-size:13px;color:#475569;margin-bottom:14px">${currentMeta.desc}</div>
     <div style="display:flex;gap:28px;font-size:12px;padding-top:12px;border-top:1px solid ${currentMeta.color}22;flex-wrap:wrap">
       <div>
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:2px">Starting stage</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.68);margin-bottom:2px">Starting stage</div>
         <span style="background:${startingMeta.bg};color:${startingMeta.color};padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700">${startingMeta.label}</span>
       </div>
       <div>
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:2px">Current stage</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.68);margin-bottom:2px">Current stage</div>
         <span style="background:${currentMeta.bg};color:${currentMeta.color};padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700">${currentMeta.label}</span>
       </div>
       <div>
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:2px">Trend</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.68);margin-bottom:2px">Trend</div>
         <span style="font-weight:700;color:${trendColor};font-size:12px">${trendText}</span>
       </div>
     </div>
@@ -1738,14 +1738,14 @@ function generateReportHTML(
   <!-- KPIs -->
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px">
     ${[
-      { label: "Latest Score",  value: String(overallLatest ?? "—"), sub: "out of 100",   color: overallLatest !== null ? (overallLatest >= 70 ? "#16a34a" : overallLatest >= 40 ? "#d97706" : "#dc2626") : "#1a2340" },
-      { label: "Sessions",      value: String(totalSessions),        sub: "recorded",      color: "#1a2340" },
-      { label: "Best Session",  value: String(bestScore ?? "—"),     sub: "highest score", color: "#16a34a" },
-      { label: "Improvement",   value: improvement !== null ? `${improvement >= 0 ? "+" : ""}${improvement}` : "—", sub: "pts since day 1", color: improvement !== null ? (improvement >= 0 ? "#16a34a" : "#dc2626") : "#1a2340" },
-    ].map(k => `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:13px 15px">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:3px">${k.label}</div>
+      { label: "Latest Score",  value: String(overallLatest ?? "—"), sub: "out of 100",   color: overallLatest !== null ? (overallLatest >= 70 ? "#2ECC91" : overallLatest >= 40 ? "#F5C242" : "#E8483A") : "#0B1F38" },
+      { label: "Sessions",      value: String(totalSessions),        sub: "recorded",      color: "#0B1F38" },
+      { label: "Best Session",  value: String(bestScore ?? "—"),     sub: "highest score", color: "#2ECC91" },
+      { label: "Improvement",   value: improvement !== null ? `${improvement >= 0 ? "+" : ""}${improvement}` : "—", sub: "pts since day 1", color: improvement !== null ? (improvement >= 0 ? "#2ECC91" : "#E8483A") : "#0B1F38" },
+    ].map(k => `<div style="background:#F4F8FD;border:1px solid #D9E6F3;border-radius:10px;padding:13px 15px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#60758A;margin-bottom:3px">${k.label}</div>
       <div style="font-size:25px;font-weight:700;font-family:monospace;color:${k.color}">${k.value}</div>
-      <div style="font-size:11px;color:#64748b;margin-top:2px">${k.sub}</div>
+      <div style="font-size:11px;color:#4A6070;margin-top:2px">${k.sub}</div>
     </div>`).join("")}
   </div>
 
@@ -1753,12 +1753,12 @@ function generateReportHTML(
   <div class="section">
     <h2>30-Day Recovery Progress — Week by Week</h2>
     <div style="padding:8px 0 4px">
-      <div style="display:flex;gap:14px;margin-bottom:16px;font-size:10px;color:#94a3b8;align-items:center;flex-wrap:wrap">
+    <div style="display:flex;gap:14px;margin-bottom:16px;font-size:10px;color:#60758A;align-items:center;flex-wrap:wrap">
         <span>Score scale: 0 ──────────────────────────────── 100</span>
-        <span style="color:#16a34a;font-weight:700">■ No concern (≥70)</span>
-        <span style="color:#d97706;font-weight:700">■ Mild (55–69)</span>
-        <span style="color:#ea580c;font-weight:700">■ Moderate (40–54)</span>
-        <span style="color:#dc2626;font-weight:700">■ Needs attn (&lt;40)</span>
+        <span style="color:#2ECC91;font-weight:700">■ No concern (≥70)</span>
+        <span style="color:#F5C242;font-weight:700">■ Mild (55–69)</span>
+        <span style="color:#FF9F43;font-weight:700">■ Moderate (40–54)</span>
+        <span style="color:#E8483A;font-weight:700">■ Needs attn (&lt;40)</span>
       </div>
       ${progressBars}
     </div>
@@ -1787,7 +1787,7 @@ function generateReportHTML(
   </div>
 
   <!-- Footer -->
-  <div style="margin-top:28px;padding-top:14px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8;text-align:center">
+  <div style="margin-top:28px;padding-top:14px;border-top:1px solid #D9E6F3;font-size:10px;color:#60758A;text-align:center">
     <p><strong>Clinical Disclaimer:</strong> Scores are AI-generated screening indicators only and must not replace professional medical advice. Always discuss results with your speech therapist or clinical team.</p>
     <p style="margin-top:5px">Vocal Therapy AI Speech Recovery Platform · Generated ${now} · Confidential</p>
   </div>
@@ -1943,15 +1943,15 @@ export default function DashboardPage() {
 
   const VERDICT_SOFT: Record<string, string> = {
     none:     D.lowSoft, mild: D.midSoft,
-    moderate: "oklch(0.96 0.04 42)", severe: D.highSoft,
+    moderate: "#FFF0E2", severe: D.highSoft,
   };
   const VERDICT_INK: Record<string, string> = {
     none: D.lowInk, mild: D.midInk,
-    moderate: "oklch(0.42 0.12 42)", severe: D.highInk,
+    moderate: "#A34205", severe: D.highInk,
   };
   const VERDICT_BORDER: Record<string, string> = {
-    none: "oklch(0.85 0.08 160)", mild: "oklch(0.85 0.08 80)",
-    moderate: "oklch(0.82 0.10 42)", severe: "oklch(0.85 0.08 25)",
+    none: "#B7E8D0", mild: "#F1D98E",
+    moderate: "#FFD0A3", severe: "#F2B6B0",
   };
   const VERDICT_DESC: Record<string, string> = {
     none:     "Speech is within the normal recovery range. Excellent progress.",
@@ -1974,7 +1974,7 @@ export default function DashboardPage() {
       }}>
         {/* Header */}
         <div style={{
-          background: `linear-gradient(135deg, oklch(0.22 0.14 160) 0%, ${D.accent} 100%)`,
+          background: "linear-gradient(135deg, #0B1F38 0%, #0D9488 100%)",
           borderRadius: 14, padding: "clamp(1rem, 4vw, 1.5rem) clamp(1rem, 4vw, 1.75rem)", color: "#fff",
           marginBottom: "1.5rem",
           display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -2228,7 +2228,7 @@ export default function DashboardPage() {
           <div style={{
             background: D.accentSoft, borderRadius: 12, padding: "2rem",
             textAlign: "center", marginBottom: "1.5rem",
-            border: `1px solid oklch(0.88 0.05 145)`,
+            border: "1px solid rgba(21,101,192,0.18)",
           }}>
             <div style={{ fontSize: "2rem", marginBottom: "0.4rem" }}>
               <Icons.Mic />

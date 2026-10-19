@@ -4,15 +4,15 @@ import SideBar from "@/app/vocal_therapy/components/SideBar";
 import { useEffect, useState } from "react";
 
 const D = {
-  bg:         "oklch(0.985 0.004 230)",
+  bg:         "#F4F8FD",
   surface:    "#ffffff",
-  border:     "oklch(0.92 0.008 230)",
-  text:       "oklch(0.22 0.018 250)",
-  textMuted:  "oklch(0.48 0.018 250)",
-  textDim:    "oklch(0.62 0.012 250)",
-  accent:     "oklch(0.55 0.10 220)",
-  accentSoft: "oklch(0.96 0.025 220)",
-  accentInk:  "oklch(0.36 0.08 220)",
+  border:     "rgba(21,101,192,0.10)",
+  text:       "#0F2137",
+  textMuted:  "#4A6070",
+  textDim:    "#60758A",
+  accent:     "#0D9488",
+  accentSoft: "#E0F5F3",
+  accentInk:  "#0B7A70",
   breakpoints: { 
     mobile: 480,   // < 480px
     tablet: 768,   // 480px - 768px

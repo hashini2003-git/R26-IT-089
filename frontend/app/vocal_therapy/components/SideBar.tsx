@@ -8,13 +8,13 @@ import { useEffect, useState, memo, useMemo } from "react";
 // Using NavBar's color scheme
 const D = {
   surface:      "#ffffff",
-  border:       "oklch(0.92 0.01 145)",
-  text:         "oklch(0.22 0.015 150)",
-  textMuted:    "oklch(0.50 0.015 150)",
-  accent:       "oklch(0.62 0.14 150)",
-  accentSoft:   "oklch(0.96 0.03 150)",
-  accentInk:    "oklch(0.38 0.08 150)",
-  sidebarBg:    "oklch(0.98 0.005 150)",
+  border:       "rgba(21,101,192,0.10)",
+  text:         "#0F2137",
+  textMuted:    "#4A6070",
+  accent:       "#0D9488",
+  accentSoft:   "#E0F5F3",
+  accentInk:    "#0B7A70",
+  sidebarBg:    "#0B1F38",
   breakpoints: { 
     mobile: 480,   // < 480px
     tablet: 768,   // 480px - 768px
@@ -44,8 +44,8 @@ const SidebarLink = memo(function SidebarLink({
         gap: 12,
         padding: "10px 16px",
         borderRadius: 10,
-        color: active ? D.accentInk : D.textMuted,
-        background: active ? D.accentSoft : "transparent",
+        color: active ? "#FFFFFF" : "rgba(255,255,255,0.76)",
+        background: active ? "#0D9488" : "transparent",
         textDecoration: "none",
         fontWeight: active ? 600 : 500,
         fontSize: "0.9rem",
@@ -430,7 +430,7 @@ const SideBar = memo(function SideBar() {
       display: "flex", 
       flexDirection: "column", 
       gap: 2,
-      borderTop: `1px solid ${D.border}`,
+      borderTop: "1px solid rgba(255,255,255,0.12)",
       paddingTop: 24,
     }}>
       <SidebarLink
@@ -570,7 +570,7 @@ const SideBar = memo(function SideBar() {
         top: 0,
         left: 0,
         background: D.sidebarBg,
-        borderRight: `1px solid ${D.border}`,
+        borderRight: "1px solid rgba(255,255,255,0.10)",
         padding: "30px 16px",
         display: "flex",
         flexDirection: "column",
