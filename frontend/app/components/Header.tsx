@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { getPatient } from "../lib/auth";
 
 interface HeaderProps {
   variant?: "dark" | "light";
@@ -25,6 +26,7 @@ const LogoMark = () => (
 export default function Header({ variant = "dark", user, onLogout }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [accountRole, setAccountRole] = useState<"patient" | "doctor">("patient");
   const pathname = usePathname();
   const router = useRouter();
 
@@ -33,6 +35,8 @@ export default function Header({ variant = "dark", user, onLogout }: HeaderProps
     window.addEventListener("scroll", fn, { passive: true });
     return () => window.removeEventListener("scroll", fn);
   }, []);
+
+  useEffect(() => { setAccountRole(getPatient()?.role === "doctor" ? "doctor" : "patient"); }, []);
 
   const isLight = variant === "light";
 
@@ -45,7 +49,11 @@ export default function Header({ variant = "dark", user, onLogout }: HeaderProps
     : "bg-transparent";
 
   const navLinks = user
-    ? [
+    ? accountRole === "doctor" ? [
+        { label: "Home", path: "/home" },
+        { label: "Patient Uploads", path: "/doctor/care" },
+        { label: "Lesion Analysis", path: "/Component1" },
+      ] : [
         { label: "Dashboard", path: "/home" },
         { label: "Lesion Analysis", path: "/Component1" },
         { label: "Risk Monitor", path: "/component2" },

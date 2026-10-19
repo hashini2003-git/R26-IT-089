@@ -209,7 +209,8 @@ function CompareContent({ visits }: { visits: Visit[] }) {
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch(`${API}/predict`, { method: "POST", body: fd });
+      const token = localStorage.getItem("oc_token");
+      const res = await fetch(`${API}/predict`, { method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Analysis failed.");
       if (side === "before") setBeforeRes(data as IpeResult); else setAfterRes(data as IpeResult);

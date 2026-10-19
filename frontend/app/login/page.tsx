@@ -85,6 +85,7 @@ export default function LoginPage() {
 
   // Design used "email" — real backend has no email field, only mobile_number.
   const [mobile, setMobile] = useState("");
+  const [role, setRole] = useState<"patient" | "doctor">("patient");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -99,12 +100,13 @@ export default function LoginPage() {
     }
     setLoading(true);
     try {
-      const res = await login(mobile.trim(), password);
+      const res = await login(mobile.trim(), password, role);
       saveAuth(res.token, {
         patient_id: res.patient_id,
         name: res.name,
         surgery_date: res.surgery_date,
         day_number: res.day_number,
+        role: res.role,
       });
       router.push("/home");
     } catch (err: unknown) {
@@ -142,6 +144,16 @@ export default function LoginPage() {
             </div>
             <h1 className="oc-font-serif text-[#0F2137] text-3xl leading-tight mb-2">Welcome back</h1>
             <p className="text-[#4A6070] text-sm">Sign in to your OralCare AI account</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mb-5" role="group" aria-label="Account role">
+            {(["patient", "doctor"] as const).map((option) => (
+              <button key={option} type="button" onClick={() => setRole(option)} aria-pressed={role === option}
+                className="rounded-xl border px-4 py-2.5 text-sm font-medium capitalize transition-colors"
+                style={{ background: role === option ? "#E3EEF9" : "white", borderColor: role === option ? "#1565C0" : "rgba(21,101,192,0.15)", color: role === option ? "#1565C0" : "#4A6070" }}>
+                {option}
+              </button>
+            ))}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

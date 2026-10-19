@@ -20,6 +20,7 @@ export type Patient = {
   surgery_date:  string;
   day_number:    number;
   therapy_stage?: string;
+  role?: "patient" | "doctor";
 };
 
 export type LoginResponse = {
@@ -28,6 +29,7 @@ export type LoginResponse = {
   name:         string;
   surgery_date: string;
   day_number:   number;
+  role:         "patient" | "doctor";
 };
 
 export type RegisterResponse = {
@@ -36,7 +38,8 @@ export type RegisterResponse = {
   name:          string;
   surgery_date:  string;
   day_number:    number;
-  therapy_stage: string;
+  role:          "patient" | "doctor";
+  therapy_stage?: string | null;
 };
 
 // Speech and vocal-therapy sessions

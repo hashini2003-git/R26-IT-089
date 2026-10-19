@@ -33,6 +33,35 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+export type CarePlan = {
+  diagnosis_status: "awaiting_confirmation" | "confirmed";
+  diagnosis: string; stage: string; treatment_type: string;
+  treatment_status: string; next_appointment: string; instructions: string;
+  tasks: { task_id?: string; title: string; detail?: string; category?: string; completed?: boolean; completed_at?: string | null }[];
+  movement_ids?: ("jaw-open" | "jaw-side" | "neck-turn")[];
+  updated_at?: string; doctor_name?: string;
+};
+export type CareNotification = { id: string; title: string; message: string; created_at: string; read: boolean };
+export type LesionRecord = { record_id: string; patient_id: string; filename: string; created_at: string; image_base64: string; result: import("../Component1/_lib/ipe-ui").IpeResult };
+async function careRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${BASE}/care/${path}`, { ...init, headers: { ...authHeaders(), ...(init?.headers ?? {}) } });
+  return handleResponse<T>(res);
+}
+export const createCareShareCode = () => careRequest<{ code: string; expires_at: string }>("share-code", { method: "POST" });
+export const connectCarePatient = (code: string) => careRequest<{ patient_id: string; patient_name: string }>("connect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
+export const fetchCarePatients = () => careRequest<{ patient_id: string; patient_name: string; plan: CarePlan | null; updated_at?: string; acknowledged_at?: string | null }[]>("patients");
+export const fetchCarePatientRecords = (patientId: string) => careRequest<{ records: LesionRecord[] }>(`patients/${encodeURIComponent(patientId)}/records`);
+export const fetchMyLesionRecords = () => careRequest<{ records: LesionRecord[] }>("records");
+export type PhotoReminder = { reminder_date: string | null; last_upload_at: string | null; doctor_connected: boolean; doctor_name: string | null };
+export const fetchPhotoReminder = () => careRequest<PhotoReminder>("photo-reminder");
+export const savePhotoReminder = (reminder_date: string | null) => careRequest<{ reminder_date: string | null }>("photo-reminder", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reminder_date }) });
+export const fetchMyCarePlan = () => careRequest<{ connected: boolean; doctor_name: string | null; plan: CarePlan | null; acknowledged_at: string | null; notifications: CareNotification[] }>("plan");
+export const saveCarePlan = (patientId: string, plan: CarePlan) => careRequest<CarePlan>(`plan/${encodeURIComponent(patientId)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(plan) });
+export const acknowledgeCarePlan = () => careRequest<{ acknowledged_at: string }>("acknowledge", { method: "POST" });
+export const updateCareTaskCompletion = (taskId: string, completed: boolean) => careRequest<CarePlan>(`tasks/${encodeURIComponent(taskId)}/completion`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ completed }) });
+export const disconnectCareTeam = () => careRequest<{ disconnected: boolean }>("disconnect", { method: "POST" });
+export const markCareNotificationsRead = () => careRequest<{ success: boolean }>("notifications/read", { method: "POST" });
+
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 export async function register(
@@ -41,6 +70,7 @@ export async function register(
   mobileNumber: string,
   password:     string,
   therapyStage: string,
+  role: "patient" | "doctor" = "patient",
 ): Promise<RegisterResponse> {
   const res = await fetch(`${BASE}/auth/register`, {
     method:  "POST",
@@ -50,17 +80,18 @@ export async function register(
       last_name:     lastName,
       mobile_number: mobileNumber,
       password,
-      therapy_stage: therapyStage,
+      role,
+      therapy_stage: role === "patient" ? therapyStage : null,
     }),
   });
   return handleResponse<RegisterResponse>(res);
 }
 
-export async function login(mobileNumber: string, password: string): Promise<LoginResponse> {
+export async function login(mobileNumber: string, password: string, role: "patient" | "doctor" = "patient"): Promise<LoginResponse> {
   const res = await fetch(`${BASE}/auth/login`, {
     method:  "POST",
     headers: { "Content-Type": "application/json" },
-    body:    JSON.stringify({ mobile_number: mobileNumber, password }),
+    body:    JSON.stringify({ mobile_number: mobileNumber, password, role }),
   });
   return handleResponse<LoginResponse>(res);
 }

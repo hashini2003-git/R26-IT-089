@@ -23,9 +23,13 @@ client = None
 db = None
 patients_collection = None
 sessions_collection = None
+care_collection = None
+lesion_records_collection = None
 
 _memory_patients: dict[str, dict[str, Any]] = {}
 _memory_sessions: dict[str, dict[str, Any]] = {}
+_memory_care_links: dict[str, dict[str, Any]] = {}
+_memory_lesion_records: dict[str, dict[str, Any]] = {}
 
 if MONGODB_URI:
     try:
@@ -34,12 +38,16 @@ if MONGODB_URI:
         db = client[DATABASE_NAME]
         patients_collection = db["patients"]
         sessions_collection = db["sessions"]
+        care_collection = db["care_links"]
+        lesion_records_collection = db["lesion_records"]
     except Exception as exc:
         print(f"MongoDB unavailable; using temporary in-memory storage: {exc}")
         client = None
         db = None
         patients_collection = None
         sessions_collection = None
+        care_collection = None
+        lesion_records_collection = None
 
 
 def _hash_password(password: str) -> str:
@@ -69,7 +77,8 @@ def create_patient(
     last_name: str,
     mobile_number: str,
     password: str,
-    therapy_stage: str,
+    therapy_stage: str | None,
+    role: str = "patient",
 ) -> None:
     today = date.today().isoformat()
     patient = {
@@ -79,6 +88,7 @@ def create_patient(
         "last_name": last_name,
         "mobile_number": mobile_number,
         "password_hash": _hash_password(password),
+        "role": role,
         "therapy_stage": therapy_stage,
         "surgery_date": today,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -127,19 +137,25 @@ def get_patient(patient_id: str) -> Optional[dict[str, Any]]:
     return _clean_document(patients_collection.find_one({"patient_id": patient_id}))
 
 
-def get_patient_by_mobile(mobile_number: str) -> Optional[dict[str, Any]]:
+def get_patient_by_mobile(mobile_number: str, role: str = "patient") -> Optional[dict[str, Any]]:
     if patients_collection is None:
         patient = next(
             (
                 item
                 for item in _memory_patients.values()
                 if item.get("mobile_number") == mobile_number
+                and item.get("role", "patient") == role
             ),
             None,
         )
         return _clean_document(patient)
     return _clean_document(
-        patients_collection.find_one({"mobile_number": mobile_number})
+        patients_collection.find_one(
+            {
+                "mobile_number": mobile_number,
+                **({"$or": [{"role": "patient"}, {"role": {"$exists": False}}]} if role == "patient" else {"role": role}),
+            }
+        )
     )
 
 
@@ -242,12 +258,59 @@ def get_progress(patient_id: str) -> list[dict[str, Any]]:
     return progress
 
 
+def save_care_link(link: dict[str, Any]) -> None:
+    if care_collection is None:
+        _memory_care_links[link["patient_id"]] = dict(link)
+    else:
+        care_collection.replace_one({"patient_id": link["patient_id"]}, link, upsert=True)
+
+
+def get_care_link(patient_id: str) -> Optional[dict[str, Any]]:
+    if care_collection is None:
+        return _clean_document(_memory_care_links.get(patient_id))
+    return _clean_document(care_collection.find_one({"patient_id": patient_id}))
+
+
+def find_care_link_by_code(code: str) -> Optional[dict[str, Any]]:
+    if care_collection is None:
+        row = next((item for item in _memory_care_links.values() if item.get("share_code") == code), None)
+        return _clean_document(row)
+    return _clean_document(care_collection.find_one({"share_code": code}))
+
+
+def get_doctor_care_links(doctor_id: str) -> list[dict[str, Any]]:
+    if care_collection is None:
+        links = [_clean_document(row) for row in _memory_care_links.values() if row.get("doctor_id") == doctor_id]
+    else:
+        links = [_clean_document(row) for row in care_collection.find({"doctor_id": doctor_id})]
+    return sorted((row for row in links if row), key=lambda row: str(row.get("updated_at", "")), reverse=True)
+
+
+def save_lesion_record(record: dict[str, Any]) -> None:
+    if lesion_records_collection is None:
+        _memory_lesion_records[record["record_id"]] = dict(record)
+    else:
+        lesion_records_collection.insert_one(record)
+
+
+def get_patient_lesion_records(patient_id: str, limit: int = 20) -> list[dict[str, Any]]:
+    if lesion_records_collection is None:
+        records = [_clean_document(row) for row in _memory_lesion_records.values() if row.get("patient_id") == patient_id]
+        records = [row for row in records if row]
+        records.sort(key=lambda row: str(row.get("created_at", "")), reverse=True)
+        return records[:limit]
+    return [_clean_document(row) or {} for row in lesion_records_collection.find({"patient_id": patient_id}).sort("created_at", -1).limit(limit)]
+
+
 def init_db() -> None:
-    if patients_collection is None or sessions_collection is None:
+    if patients_collection is None or sessions_collection is None or care_collection is None or lesion_records_collection is None:
         print("MongoDB not configured; using temporary in-memory storage")
         return
     patients_collection.create_index("patient_id", unique=True)
     patients_collection.create_index("mobile_number", unique=True, sparse=True)
     sessions_collection.create_index("session_id", unique=True)
     sessions_collection.create_index([("patient_id", 1), ("recorded_at", -1)])
+    care_collection.create_index("patient_id", unique=True)
+    lesion_records_collection.create_index("record_id", unique=True)
+    lesion_records_collection.create_index([("patient_id", 1), ("created_at", -1)])
     print("MongoDB Atlas connected and indexes created successfully")

@@ -1,0 +1,155 @@
+.selectList { display: grid; gap: 9px; margin-bottom: 15px; }
+.selectMovement {
+  display: flex; width: 100%; min-height: 58px; align-items: center; gap: 11px; padding: 10px 13px;
+  border: 1px solid rgba(21, 101, 192, 0.14); border-radius: 13px; background: #fff; color: #0f2137;
+  cursor: pointer; text-align: left; transition: border-color .16s ease, background .16s ease, transform .16s ease;
+}
+.selectMovement:hover { transform: translateY(-1px); border-color: rgba(21, 101, 192, .42); }
+.selectMovementActive { border-color: #1565c0; background: #f2f7fc; box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.08); }
+.selectCheck { display: grid; width: 23px; height: 23px; flex: 0 0 auto; place-items: center; border: 1.5px solid #9bb0c0; border-radius: 7px; color: #fff; }
+.selectMovementActive .selectCheck { border-color: #1565c0; background: #1565c0; }
+.selectText { display: grid; flex: 1; gap: 2px; }
+.selectText strong { font-size: 13px; }
+.selectText small { color: #4a6070; font-size: 10.5px; }
+.durationPicker { margin-top: 16px; padding: 14px; border: 1px solid rgba(21,101,192,.12); border-radius: 13px; background: #f8fbff; }
+.durationTitle { color: #0b1f38; font-size: 12px; font-weight: 800; }
+.durationPicker p { margin: 4px 0 11px; color: #4a6070; font-size: 11px; line-height: 1.5; }
+.durationOptions { display: flex; flex-wrap: wrap; gap: 7px; }
+.durationOption { min-height: 36px; padding: 0 12px; border: 1px solid rgba(21,101,192,.2); border-radius: 999px; background: white; color: #354e62; cursor: pointer; font-size: 11px; font-weight: 700; }
+.durationOptionActive { border-color: #1565c0; background: #e3eef9; color: #0d47a1; }
+.customDuration { margin-top: 11px; }
+.customDuration label { display: block; margin-bottom: 5px; color: #354e62; font-size: 11px; font-weight: 700; }
+.customDuration div { display: flex; align-items: center; gap: 8px; }
+.customDuration input { width: 86px; height: 38px; padding: 0 9px; border: 1px solid rgba(21,101,192,.25); border-radius: 9px; background: white; color: #0f2137; font-size: 13px; }
+.customDuration div span { color: #4a6070; font-size: 11px; }
+.applyDuration { min-height: 36px; margin-left: auto; padding: 0 13px; border: 0; border-radius: 999px; background: #1565c0; color: white; cursor: pointer; font-size: 11px; font-weight: 700; }
+.applyDuration:disabled { background: #d9e2e9; color: #6f7e89; cursor: not-allowed; }
+
+.illustration {
+  display: grid;
+  min-height: 244px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(21, 101, 192, 0.1);
+  border-radius: 16px;
+  background: radial-gradient(ellipse at 50% 35%, #ffffff 0%, #eef6fc 78%);
+}
+
+.illustration svg {
+  width: min(100%, 260px);
+  height: 205px;
+}
+
+.head,
+.jaw {
+  transform-box: view-box;
+}
+
+.head {
+  transform-origin: 120px 118px;
+}
+
+.jaw {
+  transform-origin: 120px 105px;
+}
+
+.playing.jawOpen .jaw {
+  animation: jawOpen 2.6s ease-in-out infinite;
+}
+
+.playing.jawSide .jaw {
+  animation: jawSide 3s ease-in-out infinite;
+}
+
+.playing.neckTurn .head {
+  animation: neckTurn 4s ease-in-out infinite;
+}
+
+.walker { transform-box: view-box; transform-origin: 120px 157px; }
+.walkArmLeft,.walkArmRight,.walkLegLeft,.walkLegRight { transform-box: view-box; }
+.walkArmLeft { transform-origin: 102px 75px; }
+.walkArmRight { transform-origin: 138px 75px; }
+.walkLegLeft { transform-origin: 108px 111px; }
+.walkLegRight { transform-origin: 132px 111px; }
+.activityPlaying .walkArmLeft,.activityPlaying .walkLegRight { animation: walkingSwing 1.4s ease-in-out infinite alternate; }
+.activityPlaying .walkArmRight,.activityPlaying .walkLegLeft { animation: walkingSwing 1.4s ease-in-out infinite alternate-reverse; }
+.seatArmLeft,.seatArmRight,.seatFootLeft,.seatFootRight { transform-box: view-box; }
+.seatArmLeft { transform-origin: 105px 68px; }
+.seatArmRight { transform-origin: 135px 68px; }
+.seatFootLeft { transform-origin: 94px 119px; }
+.seatFootRight { transform-origin: 146px 119px; }
+.seatedActivityPlaying .seatArmLeft { animation: seatedArmLiftLeft 2.4s ease-in-out infinite alternate; }
+.seatedActivityPlaying .seatArmRight { animation: seatedArmLiftRight 2.4s ease-in-out infinite alternate; animation-delay: 1.2s; }
+.seatedActivityPlaying .seatFootLeft,.seatedActivityPlaying .seatFootRight { animation: seatedFootTap 1.2s ease-in-out infinite alternate; }
+.seatedActivityPlaying .seatFootRight { animation-delay: .6s; }
+
+.motionLabel { margin: -9px 0 10px; color: #4a6070; font-size: 10.5px; font-weight: 600; }
+.startButton,.pauseButton,.nextButton,.exitButton { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; padding: 0 17px; border: 0; border-radius: 999px; background: linear-gradient(135deg,#1565c0,#0d47a1); color: white; cursor: pointer; font-size: 13px; font-weight: 750; }
+.startButton { width: 100%; min-height: 52px; margin-top: 14px; font-size: 14px; }
+.startHint { margin-top: 8px; color: #647787; font-size: 10.5px; }
+.sessionTop { display: flex; justify-content: space-between; align-items: center; color: #4a6070; font-size: 12px; font-weight: 700; }
+.sessionTopActions { display: flex; align-items: center; gap: 9px; }
+.timerPill,.completionTime { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 10px; border: 1px solid rgba(13,148,136,.18); border-radius: 999px; background: #f0faf8; color: #0b7a70; font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 800; }
+.completionTime { margin: 10px auto 18px; }
+.exitButton { min-height: 34px; padding: 0 12px; border: 1px solid rgba(21,101,192,.18); background: white; color: #4a6070; font-size: 11px; }
+.progressTrack { height: 7px; margin: 12px 0 18px; overflow: hidden; border-radius: 10px; background: #e8f0f6; }
+.progressTrack div { height: 100%; border-radius: inherit; background: #0d9488; transition: width .25s ease; }
+.sessionTitle { text-align: center; }
+.sessionTitle small { color: #0d9488; font-size: 11px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; }
+.sessionTitle h2 { margin: 4px 0; color: #0b1f38; font-size: 22px; }
+.sessionTitle p { margin: 0 0 14px; color: #4a6070; font-size: 13px; }
+.sessionInstruction { margin-top: 13px; padding: 12px 14px; border-radius: 12px; background: #f2f7fc; color: #354e62; font-size: 12px; line-height: 1.55; text-align: center; }
+.sessionControls { display: flex; justify-content: center; gap: 9px; flex-wrap: wrap; margin-top: 15px; }
+.pauseButton { border: 1px solid rgba(21,101,192,.2); background: white; color: #1565c0; }
+.nextButton { background: linear-gradient(135deg,#0d9488,#0b7a70); }
+.moreInfo { margin-top: 13px; padding: 14px 17px; border: 1px solid rgba(21,101,192,.12); border-radius: 14px; background: white; color: #0b1f38; font-size: 12px; }
+.moreInfo summary { cursor: pointer; font-weight: 750; }
+.detailsContent { padding-top: 8px; color: #4a6070; font-size: 12px; line-height: 1.6; }
+.detailsContent p { margin: 7px 0; }
+.completeIcon { display: grid; width: 54px; height: 54px; margin: 0 auto; place-items: center; border-radius: 50%; background: #e0f5f3; color: #0d9488; }
+
+@keyframes jawOpen {
+  0%, 100% { transform: translateY(0); }
+  45%, 60% { transform: translateY(7px); }
+}
+
+@keyframes jawSide {
+  0%, 100% { transform: translateX(0); }
+  40% { transform: translateX(-5px); }
+  70% { transform: translateX(5px); }
+}
+
+@keyframes neckTurn {
+  0%, 100% { transform: rotate(0deg); }
+  35% { transform: rotate(-7deg); }
+  70% { transform: rotate(7deg); }
+}
+
+@keyframes walkingSwing { to { transform: rotate(20deg); } }
+@keyframes seatedArmLiftLeft { to { transform: rotate(35deg); } }
+@keyframes seatedArmLiftRight { to { transform: rotate(-35deg); } }
+@keyframes seatedFootTap { to { transform: rotate(9deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .playing .jaw,
+  .playing .head {
+    animation: none !important;
+  }
+  .activityPlaying .walkArmLeft,
+  .activityPlaying .walkArmRight,
+  .activityPlaying .walkLegLeft,
+  .activityPlaying .walkLegRight {
+    animation: none !important;
+  }
+  .seatedActivityPlaying .seatArmLeft,
+  .seatedActivityPlaying .seatArmRight,
+  .seatedActivityPlaying .seatFootLeft,
+  .seatedActivityPlaying .seatFootRight {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .illustration { min-height: 225px; }
+  .sessionTitle h2 { font-size: 19px; }
+}

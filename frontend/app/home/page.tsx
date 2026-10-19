@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { isLoggedIn, getPatient, clearAuth } from "../lib/auth";
+import { fetchPhotoReminder, type PhotoReminder } from "../lib/api";
 
 const modules = [
   {
@@ -121,6 +122,7 @@ export default function HomePage() {
   const visible = useRevealOnMount();
   const [name, setName] = useState("Patient");
   const [patientId, setPatientId] = useState("");
+  const [photoReminder, setPhotoReminder] = useState<PhotoReminder | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -129,6 +131,7 @@ export default function HomePage() {
         const patient = getPatient();
         setName(patient?.name ?? "Patient");
         setPatientId(patient?.patient_id ?? "");
+        fetchPhotoReminder().then(setPhotoReminder).catch(() => {});
       }
     }, 0);
     return () => window.clearTimeout(timer);
@@ -142,6 +145,8 @@ export default function HomePage() {
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const firstName = name.split(" ")[0];
   const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+  const localDate = new Date();
+  const today = `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, "0")}-${String(localDate.getDate()).padStart(2, "0")}`;
 
   return (
     <div className="min-h-screen" style={{ background: "#F4F8FD" }}>
@@ -186,6 +191,16 @@ export default function HomePage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {photoReminder?.reminder_date && (
+          <div className="oc-card flex flex-wrap items-center justify-between gap-4 p-4 mb-7" style={{ border: "1px solid #BFE3DA", background: today >= photoReminder.reminder_date ? "#FFFBF1" : "#F1FAF7" }}>
+            <div>
+              <div className="text-[#0D766E] text-xs font-semibold mb-1">PHOTO FOLLOW-UP REMINDER</div>
+              <div className="text-[#0F2137] text-sm font-semibold">{today >= photoReminder.reminder_date ? "Your reminder is due" : "Your next reminder"} · {new Date(`${photoReminder.reminder_date}T12:00:00`).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}</div>
+              <div className="text-[#63788A] text-xs mt-1">A personal reminder based on the timing you selected with your care team.</div>
+            </div>
+            <Link href="/Component1/upload" className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white" style={{ background: "#1565C0" }}>Upload a photo</Link>
+          </div>
+        )}
         {/* KPI row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
           {kpis.map((kpi, i) => (

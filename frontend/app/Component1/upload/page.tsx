@@ -158,7 +158,8 @@ export default function Component1UploadPage() {
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch(`${API}/predict`, { method: "POST", body: fd });
+      const token = localStorage.getItem("oc_token");
+      const res = await fetch(`${API}/predict`, { method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Analysis failed. Please try again.");
       clearInterval(stepTimer);
@@ -399,7 +400,7 @@ export default function Component1UploadPage() {
                 <span style={{ fontSize: 13.5, fontWeight: 600, color: NAVY }}>Your photo stays private</span>
               </div>
               <p style={{ fontSize: 12.5, color: TEXT2, lineHeight: 1.65, margin: 0 }}>
-                Images are encrypted in transit and processed ephemerally — never stored after analysis. Only you and your care team can access your results.
+                If you are signed in, your image and analysis are saved to your care record so you can track changes. A doctor you connect with can review them; anonymous uploads are not saved to a patient record.
               </p>
             </div>
 

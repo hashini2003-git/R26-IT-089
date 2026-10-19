@@ -605,6 +605,10 @@ export type IpeResult = {
   urgency: { level: string; timeframe: string; color: string; emoji: string; message: string; days: number };
   treatment_plan: { immediate: string[]; short_term: string[]; clinical: string[]; lifestyle: string[] };
   assistant_message: string;
+  record_id?: string | null;
+  record_saved?: boolean;
+  shared_with_doctor?: boolean;
+  save_warning?: string | null;
 };
 
 const KEY = "ipe_last_result";

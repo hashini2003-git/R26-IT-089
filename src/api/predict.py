@@ -4,17 +4,22 @@ IPE Model Inference Route
 """
 
 import io
+import base64
 import sys
 import logging
+import uuid
 from pathlib import Path
+from datetime import datetime, timezone
 
 import torch
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, Header, HTTPException, UploadFile
 from PIL import Image
 from pydantic import BaseModel
 from torchvision import transforms
 
 from src.api.model import get_model, DEVICE
+from src.api.auth import decode_token
+from src.api.db import get_care_link, get_patient, save_lesion_record
 
 # ── Add models folder to path for ipe_scoring ─────────────────
 MODELS_DIR = Path(__file__).parent / "models"
@@ -103,11 +108,15 @@ class PredictionResponse(BaseModel):
     urgency            : Urgency
     treatment_plan     : TreatmentPlan
     assistant_message  : str
+    record_id          : str | None = None
+    record_saved       : bool = False
+    shared_with_doctor : bool = False
+    save_warning       : str | None = None
 
 
 # ── Predict Route ─────────────────────────────────────────────
 @router.post("/predict", response_model=PredictionResponse)
-async def predict(file: UploadFile = File(...)):
+async def predict(file: UploadFile = File(...), authorization: str | None = Header(default=None)):
     """
     Upload oral cavity image → get full IPE analysis.
     Returns: class, PPI, FIS, visual features,
@@ -125,10 +134,14 @@ async def predict(file: UploadFile = File(...)):
     # ── Load image ────────────────────────────────────────────
     try:
         image_bytes = await file.read()
+        if len(image_bytes) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="Image is too large. Please upload an image under 10 MB.")
         image = Image.open(
             io.BytesIO(image_bytes)
         ).convert("RGB")
     except Exception as e:
+        if isinstance(e, HTTPException):
+            raise
         logger.warning(f"Failed to read image: {e}")
         raise HTTPException(
             status_code=400,
@@ -198,7 +211,7 @@ async def predict(file: UploadFile = File(...)):
     )
 
     # ── Build response ────────────────────────────────────────
-    return PredictionResponse(
+    response = PredictionResponse(
         success  = True,
         filename = file.filename or "image.jpg",
 
@@ -237,3 +250,39 @@ async def predict(file: UploadFile = File(...)):
 
         assistant_message = assistant_msg,
     )
+
+    # Keep a clinician-reviewable record for logged-in patient uploads only.
+    # Anonymous image analysis remains ephemeral, as before.
+    if authorization:
+        scheme, _, token = authorization.partition(" ")
+        patient_id = decode_token(token) if scheme.lower() == "bearer" and token else None
+        patient = get_patient(patient_id) if patient_id else None
+        if not patient:
+            raise HTTPException(status_code=401, detail="Sign in with a patient account to save this image to your care record.")
+        if patient.get("role", "patient") == "patient":
+            stored_image = image.copy()
+            stored_image.thumbnail((1600, 1600))
+            image_buffer = io.BytesIO()
+            stored_image.save(image_buffer, format="JPEG", quality=86, optimize=True)
+            record_id = uuid.uuid4().hex
+            response.record_id = record_id
+            response.record_saved = True
+            try:
+                save_lesion_record({
+                    "record_id": record_id,
+                    "patient_id": patient_id,
+                    "filename": file.filename or "oral-image.jpg",
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "image_base64": base64.b64encode(image_buffer.getvalue()).decode("ascii"),
+                    "result": response.model_dump(),
+                })
+                care_link = get_care_link(patient_id)
+                response.shared_with_doctor = bool(care_link and care_link.get("doctor_id"))
+            except Exception:
+                logger.exception("Could not save patient's lesion analysis record")
+                response.record_id = None
+                response.record_saved = False
+                response.save_warning = "Your analysis is ready, but this upload could not be saved to your care record. Please try again later."
+    else:
+        response.save_warning = "This analysis was not saved to your care record. Sign in as a patient before uploading to share it with your care team and track future uploads."
+    return response

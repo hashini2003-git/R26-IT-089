@@ -11,6 +11,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ResponsiveContainer,
 } from "recharts";
 import { loadResult, type IpeResult } from "../_lib/ipe-ui";
+import { getPatient } from "../../lib/auth";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
 
@@ -225,7 +226,7 @@ function SidebarLayout({ title, children }: { title: string; children: React.Rea
 }
 
 /* ── Results content ─────────────────────────────────────────── */
-function ResultsContent({ result }: { result: IpeResult }) {
+function ResultsContent({ result, isDoctor }: { result: IpeResult; isDoctor: boolean }) {
   const router = useRouter();
   const { classification, ppi, fis, visual_features: vf, urgency, treatment_plan } = result;
   const ppiMax = ppi.max ?? 10;
@@ -316,26 +317,47 @@ function ResultsContent({ result }: { result: IpeResult }) {
           <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.3, color: MINT, marginBottom: 5 }}>Analysis Report</div>
           <h1 style={{ fontSize: 26, fontWeight: 400, color: NAVY, margin: 0, fontFamily: SERIF }}>Your Results</h1>
         </div>
-        <button onClick={downloadReport} disabled={reportLoading}
+        {isDoctor && <button onClick={downloadReport} disabled={reportLoading}
           style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 20px", borderRadius: 999, background: reportLoading ? "#B9C6C7" : `linear-gradient(135deg, ${BLUE}, ${BLUE_DEEP})`, border: "none", color: "#fff", fontSize: 13, fontWeight: 600, cursor: reportLoading ? "not-allowed" : "pointer", fontFamily: FONT, boxShadow: reportLoading ? "none" : `0 4px 16px ${BLUE}40` }}>
           <Download size={15} /> {reportLoading ? "Generating…" : "Download PDF Report"}
-        </button>
+        </button>}
       </div>
 
-      {reportError && (
+      {result.save_warning && <div role="status" style={{ padding: "12px 16px", borderRadius: 14, background: "#FFF7E8", border: "1px solid #F2D7A4", color: "#725316", fontSize: 13, lineHeight: 1.5, marginBottom: 16 }}>{result.save_warning}</div>}
+      {result.record_saved && <div role="status" style={{ padding: "12px 16px", borderRadius: 14, background: "#EAF8F2", border: "1px solid #B8E3CE", color: "#176B4B", fontSize: 13, lineHeight: 1.5, marginBottom: 16 }}>{result.shared_with_doctor ? "Photo saved and shared with your connected doctor. A new-upload reminder is waiting in their patient list." : "Photo saved to your tracking record. Connect with your doctor if you want them to review future uploads."}</div>}
+
+      {isDoctor && reportError && (
         <div style={{ padding: "12px 16px", borderRadius: 14, background: "#FDEDEB", color: "#E8483A", fontSize: 13, fontWeight: 600, marginBottom: 16 }}>
           {reportError}
         </div>
       )}
 
-      <div style={{ background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}`, padding: "10px 18px", marginBottom: 20, display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center" }}>
-        <span style={{ fontSize: 10.5, fontWeight: 700, color: TEXT2, textTransform: "uppercase", letterSpacing: 0.8 }}>Color guide:</span>
-        {[["#2ECC91", "Normal"], ["#F5C242", "Mild concern"], ["#FF9F43", "See doctor soon"], ["#E8483A", "Urgent"]].map(([c, l]) => (
-          <div key={l} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <span style={{ width: 10, height: 10, borderRadius: "50%", background: c, display: "inline-block" }} />
-            <span style={{ fontSize: 11.5, color: TEXT2 }}>{l}</span>
+      <div style={{ background: "#fff", borderRadius: 18, border: `1px solid ${BORDER}`, padding: "18px 20px", marginBottom: 20, boxShadow: "0 2px 12px rgba(21,101,192,0.05)" }}>
+        <div style={{ fontSize: 12, fontWeight: 800, color: NAVY, marginBottom: 14 }}>How to read the colors</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 18 }}>
+          <div>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: TEXT2, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 9 }}>Finding category</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {Object.entries(CLASS_COLORS).map(([label, color]) => (
+                <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 11px", borderRadius: 11, background: `${color}12`, border: `1px solid ${color}35` }}>
+                  <span style={{ width: 13, height: 13, borderRadius: 4, background: color, flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, fontWeight: 650, color: TEXT }}>{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
+          <div>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: TEXT2, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 9 }}>Concern and follow-up level</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {[[SEV[0], "Normal"], [SEV[1], "Mild concern"], [SEV[2], "See doctor soon"], [SEV[3], "Urgent"]].map(([color, label]) => (
+                <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 11px", borderRadius: 11, background: `${color}12`, border: `1px solid ${color}35` }}>
+                  <span style={{ width: 13, height: 13, borderRadius: 4, background: color, flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, fontWeight: 650, color: TEXT }}>{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* SECTION 1: Diagnosis Hero */}
@@ -347,7 +369,7 @@ function ResultsContent({ result }: { result: IpeResult }) {
             <div style={{ flex: 1, minWidth: 220 }}>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
                 <span style={{ fontSize: 11, fontWeight: 700, padding: "5px 14px", borderRadius: 20, background: `${urgency.color}cc`, color: "#fff" }}>{urgency.level}</span>
-                <span style={{ fontSize: 11, fontWeight: 700, padding: "5px 14px", borderRadius: 20, background: "rgba(255,255,255,0.12)", color: "#fff" }}>{confidencePct}% confidence</span>
+                {isDoctor && <span style={{ fontSize: 11, fontWeight: 700, padding: "5px 14px", borderRadius: 20, background: "rgba(255,255,255,0.12)", color: "#fff" }}>{confidencePct}% confidence</span>}
               </div>
               <h2 style={{ fontSize: 32, fontWeight: 400, color: "#fff", margin: "0 0 12px", fontFamily: SERIF }}>{classification.name}</h2>
               <p style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", lineHeight: 1.7, margin: "0 0 16px", maxWidth: 420 }}>{urgency.message}</p>
@@ -364,7 +386,7 @@ function ResultsContent({ result }: { result: IpeResult }) {
               <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>Pain Intensity</div>
             </div>
           </div>
-          <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
+          {isDoctor && <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
             <button onClick={() => router.push("/Component1/assistant")} style={{ display: "flex", alignItems: "center", gap: 7, padding: "10px 18px", borderRadius: 999, background: "rgba(255,255,255,0.92)", border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 600, color: NAVY, fontFamily: FONT }}>
               <MessageSquare size={14} color={MINT} /> Ask AI Assistant
             </button>
@@ -374,10 +396,50 @@ function ResultsContent({ result }: { result: IpeResult }) {
             <button onClick={downloadReport} disabled={reportLoading} style={{ display: "flex", alignItems: "center", gap: 7, padding: "10px 18px", borderRadius: 999, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.18)", cursor: reportLoading ? "not-allowed" : "pointer", fontSize: 12.5, fontWeight: 600, color: "#fff", fontFamily: FONT }}>
               <Download size={14} /> {reportLoading ? "Generating…" : "PDF Report"}
             </button>
-          </div>
+          </div>}
         </div>
       </div>
 
+      {!isDoctor && <>
+      {/* Patient-facing functional impact summary */}
+      <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.3, color: TEXT2, marginBottom: 12 }}>Section 2 · Possible day-to-day impact</div>
+      <GlassCard style={{ marginBottom: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap", marginBottom: 18 }}>
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: NAVY, marginBottom: 6 }}>Functional impact</div>
+            <p style={{ fontSize: 12.5, color: TEXT2, lineHeight: 1.65, margin: 0 }}>
+              A short, plain-language estimate of how the area might affect everyday activities. It does not measure symptoms you have reported.
+            </p>
+          </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 16 }}>
+          {fisRows.map((f) => <div key={f.label} style={{ padding: "13px 15px", borderRadius: 14, background: "#FAFCFF", border: `1px solid ${BORDER}` }}><div style={{ fontSize: 13, fontWeight: 700, color: TEXT, marginBottom: 5 }}>{f.label}</div><p style={{ fontSize: 12, color: TEXT2, lineHeight: 1.55, margin: 0 }}>{f.note}</p></div>)}
+        </div>
+        <p style={{ fontSize: 11, color: TEXT2, lineHeight: 1.55, margin: "16px 0 0", paddingTop: 12, borderTop: `1px solid ${BORDER}` }}>
+          This is an image-based estimate, not a diagnosis. Tell your care team how you are actually feeling.
+        </p>
+      </GlassCard>
+      <GlassCard style={{ marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap", background: "#F4FBFA", border: "1px solid #CDE9E5" }}>
+        <div style={{ flex: 1, minWidth: 220 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: NAVY, marginBottom: 5 }}>Physiotherapy movements</div>
+          <p style={{ fontSize: 12.5, color: TEXT2, lineHeight: 1.6, margin: 0 }}>Start with jaw or neck movements your care team has prescribed. Finish the session to return here.</p>
+        </div>
+        <button onClick={() => router.push("/Component1/results/pre-treatment?mode=physiotherapy")} style={{ display: "inline-flex", alignItems: "center", gap: 8, border: 0, borderRadius: 12, background: MINT, color: "white", padding: "12px 16px", fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
+          Start physiotherapy <ChevronRight size={16} />
+        </button>
+      </GlassCard>
+      <GlassCard style={{ marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap", background: "#F5F8FD", border: "1px solid #D8E3EE" }}>
+        <div style={{ flex: 1, minWidth: 220 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: NAVY, marginBottom: 5 }}>Physiotherapy and guided movement</div>
+          <p style={{ fontSize: 12.5, color: TEXT2, lineHeight: 1.6, margin: 0 }}>Continue with a separate body activity task, such as comfortable walking or gentle movement at home.</p>
+        </div>
+        <button onClick={() => router.push("/Component1/results/pre-treatment?mode=body")} style={{ display: "inline-flex", alignItems: "center", gap: 8, border: 0, borderRadius: 12, background: BLUE, color: "white", padding: "12px 16px", fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
+          Start body guided movement <ChevronRight size={16} />
+        </button>
+      </GlassCard>
+      </>}
+
+      {isDoctor && <>
       {/* SECTION 2: How this feels */}
       <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.3, color: TEXT2, marginBottom: 12 }}>Section 2 · How does this feel?</div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
@@ -492,14 +554,17 @@ function ResultsContent({ result }: { result: IpeResult }) {
         </div>
       </GlassCard>
 
+      </>}
+
+      {isDoctor && <>
       {/* SECTION 5: Technical */}
-      <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.3, color: TEXT2, marginBottom: 12 }}>Section 5 · Technical analysis</div>
+      <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.3, color: TEXT2, marginBottom: 12 }}>{isDoctor ? "Section 5 · Technical analysis" : "Color charts"}</div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-        <GlassCard onClick={() => router.push("/Component1/results/visual")}>
+        <GlassCard onClick={isDoctor ? () => router.push("/Component1/results/visual") : undefined}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
             <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: MINT }}>Biomarker Overview (Radar)</div>
           </div>
-          <p style={{ fontSize: 11.5, color: TEXT2, marginBottom: 14, lineHeight: 1.55 }}>Each axis shows the strength of that signal. Closer to edge = stronger finding.</p>
+          {isDoctor && <p style={{ fontSize: 11.5, color: TEXT2, marginBottom: 14, lineHeight: 1.55 }}>Each axis shows the strength of that signal. Closer to edge = stronger finding.</p>}
           <ResponsiveContainer width="100%" height={220}>
             <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="58%" margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
               <PolarGrid stroke="rgba(21,101,192,0.08)" />
@@ -508,14 +573,14 @@ function ResultsContent({ result }: { result: IpeResult }) {
               <Radar dataKey="value" stroke={BLUE} fill={BLUE} fillOpacity={0.15} dot={{ fill: BLUE, r: 3, strokeWidth: 0 }} />
             </RadarChart>
           </ResponsiveContainer>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, marginTop: 10, fontSize: 10.5, fontWeight: 700, color: BLUE }}>
+          {isDoctor && <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, marginTop: 10, fontSize: 10.5, fontWeight: 700, color: BLUE }}>
             View full breakdown →
-          </div>
+          </div>}
         </GlassCard>
 
         <GlassCard>
           <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: MINT, marginBottom: 8 }}>Diagnosis Probabilities</div>
-          <p style={{ fontSize: 11.5, color: TEXT2, marginBottom: 14, lineHeight: 1.55 }}>How confident the AI is about each possible diagnosis. Longest bar = primary finding.</p>
+          {isDoctor && <p style={{ fontSize: 11.5, color: TEXT2, marginBottom: 14, lineHeight: 1.55 }}>How confident the AI is about each possible diagnosis. Longest bar = primary finding.</p>}
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={probData} layout="vertical" margin={{ left: 4, right: 32, top: 0, bottom: 0 }}>
               <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 9.5, fill: TEXT2 }} axisLine={false} tickLine={false} />
@@ -536,9 +601,10 @@ function ResultsContent({ result }: { result: IpeResult }) {
           </div>
         </GlassCard>
       </div>
+      </>}
 
       {/* AI Summary */}
-      <GlassCard style={{ borderLeft: `4px solid ${MINT}` }}>
+      {isDoctor && <GlassCard style={{ borderLeft: `4px solid ${MINT}` }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
           <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: MINT }}>AI Clinical Summary</div>
           <button onClick={downloadReport} disabled={reportLoading}
@@ -558,7 +624,7 @@ function ResultsContent({ result }: { result: IpeResult }) {
             <TrendingUp size={14} /> Track Progress
           </button>
         </div>
-      </GlassCard>
+      </GlassCard>}
     </div>
   );
 }
@@ -566,8 +632,10 @@ function ResultsContent({ result }: { result: IpeResult }) {
 export default function Component1ResultsPage() {
   const router = useRouter();
   const [result, setResult] = useState<IpeResult | null | undefined>(undefined);
+  const [isDoctor, setIsDoctor] = useState(false);
 
   useEffect(() => {
+    setIsDoctor(getPatient()?.role === "doctor");
     setResult(loadResult());
   }, []);
 
@@ -590,7 +658,7 @@ export default function Component1ResultsPage() {
           </button>
         </div>
       )}
-      {result && <ResultsContent result={result} />}
+      {result && <ResultsContent result={result} isDoctor={isDoctor} />}
     </SidebarLayout>
   );
 }

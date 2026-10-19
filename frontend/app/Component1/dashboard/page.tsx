@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import {
   Heart, Camera, LayoutDashboard, BarChart2, TrendingUp, GitCompare,
@@ -11,6 +12,8 @@ import {
   AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { loadResult, type IpeResult } from "../_lib/ipe-ui";
+import { createCareShareCode, fetchPhotoReminder, savePhotoReminder, type PhotoReminder } from "../../lib/api";
+import { isLoggedIn } from "../../lib/auth";
 
 /* ── Palette (exact match) ───────────────────────────────────── */
 const BLUE = "#1565C0";
@@ -67,6 +70,87 @@ function GlassCard({ children, style }: { children: React.ReactNode; style?: Rea
 }
 function SevBadge({ label, color }: { label: string; color: string }) {
   return <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: `${color}18`, color, letterSpacing: 0.3 }}>{label}</span>;
+}
+
+function PhotoReminderCard() {
+  const [info, setInfo] = useState<PhotoReminder | null>(null);
+  const [reminderDate, setReminderDate] = useState("");
+  const [shareCode, setShareCode] = useState("");
+  const [expiresAt, setExpiresAt] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [messageIsError, setMessageIsError] = useState(false);
+
+  function explainError(error: unknown, fallback: string) {
+    const detail = error instanceof Error ? error.message : fallback;
+    if (detail.toLowerCase().includes("patient was not found")) {
+      return "Your account is no longer available on the backend. MongoDB is disconnected and temporary accounts are cleared when the API restarts. Sign up again to save reminders; uploads and reminders may not persist until MongoDB reconnects.";
+    }
+    return detail;
+  }
+
+  useEffect(() => {
+    if (!isLoggedIn()) return;
+    fetchPhotoReminder().then((data) => {
+      setInfo(data);
+      setReminderDate(data.reminder_date ?? "");
+    }).catch((error) => { setMessageIsError(true); setMessage(explainError(error, "Could not load photo reminders.")); });
+  }, []);
+
+  async function saveReminder() {
+    setBusy(true); setMessage(""); setMessageIsError(false);
+    try {
+      const saved = await savePhotoReminder(reminderDate || null);
+      setReminderDate(saved.reminder_date ?? "");
+      setMessage(saved.reminder_date ? `Reminder saved for ${dateLabel(saved.reminder_date)}.` : "Photo reminder cleared.");
+    } catch (error) { setMessageIsError(true); setMessage(explainError(error, "Could not save your reminder.")); }
+    finally { setBusy(false); }
+  }
+
+  async function createShareCode() {
+    setBusy(true); setMessage(""); setMessageIsError(false);
+    try {
+      const result = await createCareShareCode();
+      setShareCode(result.code); setExpiresAt(result.expires_at);
+      setMessage("Show this one-time code to your doctor to connect your accounts.");
+    } catch (error) { setMessageIsError(true); setMessage(explainError(error, "Could not create a sharing code.")); }
+    finally { setBusy(false); }
+  }
+
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const reminderDue = !!reminderDate && reminderDate <= today;
+  const dateLabel = (value: string) => new Date(value).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+
+  return (
+    <GlassCard style={{ marginBottom: 22, borderColor: reminderDue ? "#F2C66D" : BORDER, background: reminderDue ? "#FFFBF1" : "#fff" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
+        <div style={{ flex: "1 1 300px" }}>
+          <div style={{ fontSize: 10.5, fontWeight: 750, letterSpacing: 1.1, color: MINT, textTransform: "uppercase", marginBottom: 5 }}>Photo follow-up</div>
+          <h2 style={{ margin: 0, color: NAVY, fontFamily: SERIF, fontSize: 20, fontWeight: 500 }}>Your next photo reminder</h2>
+          <p style={{ color: TEXT2, fontSize: 12.5, lineHeight: 1.55, marginTop: 6 }}>Choose a date that works with the timing discussed with your care team. This is a reminder only; it does not tell you how often to upload.</p>
+          <p style={{ color: TEXT2, fontSize: 12, marginTop: 8 }}>
+            {info?.last_upload_at ? `Last photo uploaded ${dateLabel(info.last_upload_at)}.` : "No saved photos yet. Upload a photo to begin tracking."}
+            {info?.doctor_connected ? ` Shared with ${info.doctor_name || "your connected doctor"}.` : " Connect with your doctor to share uploaded photos for review."}
+          </p>
+          {info?.doctor_connected && <span style={{ display: "inline-block", marginTop: 8, borderRadius: 99, padding: "5px 10px", background: "#E4F6EF", color: "#14734F", fontSize: 11, fontWeight: 700 }}>Doctor connected · uploads shared for review</span>}
+        </div>
+        <div style={{ flex: "1 1 230px", maxWidth: 340 }}>
+          {isLoggedIn() ? <>
+            <label htmlFor="photo-reminder-date" style={{ display: "block", fontSize: 11.5, color: TEXT2, fontWeight: 650, marginBottom: 6 }}>Remind me on</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input id="photo-reminder-date" type="date" value={reminderDate} onChange={(event) => setReminderDate(event.target.value)} style={{ flex: 1, minWidth: 0, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "9px 10px", color: TEXT, background: "#fff", fontFamily: FONT }} />
+              <button disabled={busy} onClick={() => void saveReminder()} style={{ border: 0, borderRadius: 10, padding: "9px 13px", background: BLUE, color: "#fff", fontWeight: 700, cursor: busy ? "wait" : "pointer" }}>{busy ? "Saving…" : "Save date"}</button>
+            </div>
+            {reminderDate && <p style={{ fontSize: 11.5, fontWeight: 700, color: reminderDue ? "#A15C00" : MINT, marginTop: 8 }}>{reminderDue ? "Reminder due" : `Next reminder: ${dateLabel(reminderDate)}`}</p>}
+            {!info?.doctor_connected && <button disabled={busy} onClick={() => void createShareCode()} style={{ marginTop: 10, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "8px 11px", background: "#fff", color: BLUE, fontWeight: 650, cursor: busy ? "wait" : "pointer" }}>{busy ? "Please wait…" : "Connect with my doctor"}</button>}
+            {shareCode && <div style={{ marginTop: 10, padding: 11, borderRadius: 10, background: MINT_TINT, color: NAVY }}><div style={{ fontSize: 10.5, color: TEXT2 }}>One-time code · expires {new Date(expiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</div><strong style={{ display: "block", fontSize: 24, letterSpacing: 5, color: MINT, marginTop: 3 }}>{shareCode}</strong></div>}
+          </> : <Link href="/login" style={{ display: "inline-block", marginTop: 10, color: BLUE, fontWeight: 700, fontSize: 12.5 }}>Sign in to save reminders and share photos with your doctor →</Link>}
+          {message && <p role={messageIsError ? "alert" : "status"} style={{ color: messageIsError ? "#9B1C1C" : "#176B4B", background: messageIsError ? "#FFF0EF" : "#EAF8F2", border: `1px solid ${messageIsError ? "#F4C7C4" : "#B8E3CE"}`, borderRadius: 9, padding: "9px 11px", fontSize: 12, lineHeight: 1.5, marginTop: 9 }}>{message}</p>}
+        </div>
+      </div>
+    </GlassCard>
+  );
 }
 function StatTile({ label, value, sub, color, icon }: { label: string; value: string; sub?: string; color: string; icon?: React.ReactNode }) {
   return (
@@ -246,6 +330,8 @@ function DashboardContent({ result, visits }: { result: IpeResult | null; visits
           <Camera size={15} /> New Scan
         </button>
       </div>
+
+      <PhotoReminderCard />
 
       {result && (
         <div style={{ background: `${result.urgency.color}0D`, border: `1px solid ${result.urgency.color}28`, borderRadius: 16, padding: "13px 18px", marginBottom: 22, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>

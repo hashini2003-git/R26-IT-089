@@ -14,11 +14,13 @@ const LogoMark = () => (
 );
 
 type Stage = "pre" | "in" | "post";
+type AccountRole = "patient" | "doctor";
 
 export default function RegisterPage() {
   const router = useRouter();
 
   const [step, setStep] = useState(1);
+  const [role, setRole] = useState<AccountRole>("patient");
   // Design's role selector (patient/clinician/researcher) has no backend field.
   // Swapped 1:1 for the same visual — 3-button grid — using the real therapy_stage field.
   const [therapyStage, setTherapyStage] = useState<Stage>("in");
@@ -101,13 +103,14 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
-      const res = await register(firstName.trim(), lastName.trim(), mobile.trim(), password, therapyStage);
+      const res = await register(firstName.trim(), lastName.trim(), mobile.trim(), password, therapyStage, role);
       saveAuth(res.token, {
         patient_id: res.patient_id,
         name: res.name,
         surgery_date: res.surgery_date,
         day_number: res.day_number,
         therapy_stage: res.therapy_stage,
+        role: res.role,
       });
       router.push("/home");
     } catch (err: unknown) {
@@ -232,8 +235,20 @@ export default function RegisterPage() {
 
           {step === 1 && (
             <form onSubmit={handleNext} className="space-y-4">
-              {/* Therapy stage selector */}
               <div>
+                <label className="block text-[#0F2137] text-sm font-medium mb-2">Account type</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["patient", "doctor"] as const).map((option) => (
+                    <button key={option} type="button" onClick={() => setRole(option)} aria-pressed={role === option}
+                      className="rounded-xl border p-3 text-left text-sm font-semibold capitalize transition-all"
+                      style={{ background: role === option ? "#E3EEF9" : "white", borderColor: role === option ? "#1565C0" : "rgba(21,101,192,0.12)", color: role === option ? "#1565C0" : "#0F2137" }}>
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Therapy stage selector */}
+              {role === "patient" && <div>
                 <label className="block text-[#0F2137] text-sm font-medium mb-2">Therapy stage</label>
                 <div className="grid grid-cols-3 gap-2">
                   {stages.map((s) => (
@@ -260,7 +275,7 @@ export default function RegisterPage() {
                 <p className="text-[#9BAABA] text-[11px] mt-2 leading-relaxed">
                   {stages.find((s) => s.value === therapyStage)?.desc}
                 </p>
-              </div>
+              </div>}
 
               {/* Name */}
               <div className="grid grid-cols-2 gap-3">

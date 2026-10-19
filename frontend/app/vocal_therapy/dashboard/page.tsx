@@ -1824,10 +1824,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isLoggedIn()) { router.replace("/login"); return; }
-    Promise.all([fetchMe(), fetchProgress(), fetchSessions()])
+    Promise.all([fetchMe().catch(() => cached), fetchProgress(), fetchSessions()])
       .then(([me, prog, sess]) => {
-        setPatient(me);
-        if (cached) saveAuth(localStorage.getItem("oc_token") ?? "", me);
+        setPatient(me ?? cached);
+        if (me && cached) saveAuth(localStorage.getItem("oc_token") ?? "", me);
         setProgress(prog);
         setSessions(sess);
         
