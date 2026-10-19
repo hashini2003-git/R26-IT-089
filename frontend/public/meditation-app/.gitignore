@@ -1,0 +1,5 @@
+# The repository root ignores generic build folders. Keep this WebGL build.
+!Build/
+!Build/**
+!TemplateData/
+!TemplateData/**
