@@ -17,11 +17,11 @@ import { AssessmentProvider } from "./context";
 import styles from "./risk-voice.module.css";
 
 const links = [
-  ["/component2", "Overview", LayoutDashboard],
-  ["/component2/risk", "Risk Assessment", ClipboardList],
-  ["/component2/voice", "Voice Analysis", AudioLines],
-  ["/component2/monitoring", "Weekly Monitoring", Activity],
-  ["/component2/history", "History", ListChecks],
+  ["/component2", "My Overview", LayoutDashboard],
+  ["/component2/risk", "Check My Risk", ClipboardList],
+  ["/component2/voice", "Check My Voice", AudioLines],
+  ["/component2/monitoring", "Track Progress", Activity],
+  ["/component2/history", "My Results", ListChecks],
 ] as const;
 
 export default function ComponentTwoLayout({ children }: { children: ReactNode }) {
@@ -68,11 +68,11 @@ export default function ComponentTwoLayout({ children }: { children: ReactNode }
 
         <header className={styles.moduleHeader}>
           <div className={styles.moduleTitle}>
-            <span>MEMBER 2 · SUPPORTIVE SCREENING</span>
-            <h1>Risk &amp; Voice Monitoring</h1>
+            <span>YOUR ORAL HEALTH CHECK</span>
+            <h1>Oral Health Risk &amp; Voice Check</h1>
             <p>
-              Preventive risk intelligence and longitudinal voice biomarkers in
-              one secure workspace.
+              Check your oral health risk, record your voice, and follow changes
+              over time.
             </p>
           </div>
 

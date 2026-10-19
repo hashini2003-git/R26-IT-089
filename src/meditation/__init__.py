@@ -1,0 +1,1 @@
+"""Meditation recommendation component."""
